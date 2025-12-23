@@ -1,0 +1,7 @@
+DB_USER=postgres
+DB_HOST=localhost
+DB_DATABASE=dra_acuna
+DB_PASSWORD=tu_password_aqui
+DB_PORT=5432
+PORT=3001
+JWT_SECRET=tu_clave_secreta_super_segura
