@@ -1,14 +1,23 @@
-import { Link } from 'react-router-dom';
-import { Navbar as BSNavbar, Container, Nav } from 'react-bootstrap';
-import { FaUserMd, FaUsers, FaStethoscope, FaCalendarAlt } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
+import { Navbar as BSNavbar, Container, Nav, Button } from 'react-bootstrap';
+import { FaUserMd, FaUsers, FaStethoscope, FaCalendarAlt, FaSignOutAlt } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <BSNavbar bg="primary" variant="dark" expand="lg" className="mb-4">
       <Container>
         <BSNavbar.Brand as={Link} to="/">
           <FaUserMd className="me-2" />
-          Consultorio Médico
+          Consultorio Dra Acuña
         </BSNavbar.Brand>
         <BSNavbar.Toggle aria-controls="basic-navbar-nav" />
         <BSNavbar.Collapse id="basic-navbar-nav">
@@ -30,6 +39,17 @@ const Navbar = () => {
               Turnos
             </Nav.Link>
           </Nav>
+          {user && (
+            <Nav className="ms-3">
+              <span className="navbar-text text-white me-3">
+                {user.name}
+              </span>
+              <Button variant="outline-light" size="sm" onClick={handleLogout}>
+                <FaSignOutAlt className="me-1" />
+                Salir
+              </Button>
+            </Nav>
+          )}
         </BSNavbar.Collapse>
       </Container>
     </BSNavbar>
