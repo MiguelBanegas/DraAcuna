@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Table, Button, Form, InputGroup, Badge, Container, Row, Col, Card } from 'react-bootstrap';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +9,14 @@ const PacientesList = () => {
   const { pacientes, eliminarPaciente, buscarPacientes } = usePacientes();
   const [searchTerm, setSearchTerm] = useState('');
   const [pacientesFiltrados, setPacientesFiltrados] = useState(pacientes);
+  const searchInputRef = useRef(null);
+
+  // Auto-focus en el campo de búsqueda al cargar el componente
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
 
   // Actualizar filtro cuando cambia el término de búsqueda
   const handleSearch = (e) => {
@@ -82,6 +90,7 @@ const PacientesList = () => {
               <FaSearch />
             </InputGroup.Text>
             <Form.Control
+              ref={searchInputRef}
               type="text"
               placeholder="Buscar por nombre o DNI..."
               value={searchTerm}

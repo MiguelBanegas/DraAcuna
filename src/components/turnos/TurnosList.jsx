@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Table, Button, Form, InputGroup, Container, Row, Col, Card, Badge } from 'react-bootstrap';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaCheck, FaTimes, FaClock } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,14 @@ const TurnosList = () => {
   const [filtroFecha, setFiltroFecha] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('');
   const [filtroPaciente, setFiltroPaciente] = useState('');
+  const searchInputRef = useRef(null);
+
+  // Auto-focus en el campo de búsqueda al cargar el componente
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
 
   // Filtrar turnos
   const turnosFiltrados = turnos.filter(turno => {
@@ -113,6 +121,7 @@ const TurnosList = () => {
                   <FaSearch />
                 </InputGroup.Text>
                 <Form.Control
+                  ref={searchInputRef}
                   type="text"
                   placeholder="Buscar por paciente, DNI o motivo..."
                   value={searchTerm}

@@ -84,6 +84,7 @@ body {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -99,12 +100,106 @@ body {
   .card {
     margin-bottom: 1rem;
   }
-  
+
   h1 {
     font-size: 1.75rem;
   }
-  
-  h2 {
-    font-size: 1.5rem;
+}
+
+/* Mini Calendar Styles */
+.mini-calendar {
+  width: 100%;
+}
+
+.mini-calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.day-name {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #6c757d;
+  padding: 4px 0;
+}
+
+.mini-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.mini-calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  position: relative;
+  transition: all 0.2s;
+  background-color: #f8f9fa;
+  cursor: default;
+}
+
+.mini-calendar-day.empty {
+  background-color: transparent;
+}
+
+.mini-calendar-day.today {
+  background-color: #0d6efd;
+  color: white;
+  font-weight: 700;
+}
+
+.mini-calendar-day.has-turnos {
+  background-color: #e7f3ff;
+  border: 1px solid #0d6efd;
+}
+
+.mini-calendar-day.has-turnos:hover {
+  background-color: #cfe2ff;
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mini-calendar-day.today.has-turnos {
+  background-color: #0d6efd;
+  border: 2px solid #0a58ca;
+}
+
+.mini-calendar-day .day-number {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.mini-calendar-day .turnos-badge {
+  font-size: 0.6rem;
+  padding: 1px 4px;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.mini-calendar-day.today .turnos-badge {
+  background-color: white !important;
+  color: #0d6efd !important;
+}
+
+/* Responsive adjustments for calendar */
+@media (max-width: 768px) {
+  .day-name {
+    font-size: 0.65rem;
+  }
+
+  .mini-calendar-day .day-number {
+    font-size: 0.7rem;
+  }
+
+  .mini-calendar-day .turnos-badge {
+    font-size: 0.55rem;
   }
 }

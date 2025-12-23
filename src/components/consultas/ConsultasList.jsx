@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Table, Button, Form, InputGroup, Container, Row, Col, Card, Badge } from 'react-bootstrap';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +12,14 @@ const ConsultasList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroFecha, setFiltroFecha] = useState('');
   const [filtroPaciente, setFiltroPaciente] = useState('');
+  const searchInputRef = useRef(null);
+
+  // Auto-focus en el campo de búsqueda al cargar el componente
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
 
   // Filtrar consultas
   const consultasFiltradas = consultas.filter(consulta => {
@@ -89,6 +97,7 @@ const ConsultasList = () => {
                   <FaSearch />
                 </InputGroup.Text>
                 <Form.Control
+                  ref={searchInputRef}
                   type="text"
                   placeholder="Buscar por paciente, DNI, motivo o diagnóstico..."
                   value={searchTerm}

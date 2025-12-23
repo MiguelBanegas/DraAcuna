@@ -1,154 +1,181 @@
-import { Container, Row, Col, Card } from 'react-bootstrap';
+import { Container, Row, Col, Card, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { FaUsers, FaStethoscope, FaCalendarAlt, FaCalendarCheck } from 'react-icons/fa';
+import { FaCalendarPlus, FaCalendarAlt, FaCalendarCheck, FaClock } from 'react-icons/fa';
 import { usePacientes } from '../context/PacientesContext';
-import { useConsultas } from '../context/ConsultasContext';
 import { useTurnos } from '../context/TurnosContext';
+import CalendarView from '../components/layout/CalendarView';
 
 const Home = () => {
   const { pacientes } = usePacientes();
-  const { consultas } = useConsultas();
   const { obtenerTurnosPorFecha, obtenerTurnosProximos } = useTurnos();
 
   // Obtener turnos del día
   const turnosHoy = obtenerTurnosPorFecha(new Date());
   const turnosProximos = obtenerTurnosProximos();
 
-  // Obtener consultas del mes actual
-  const hoy = new Date();
-  const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-  const consultasMes = consultas.filter(c => {
-    const fechaConsulta = new Date(c.fechaHora);
-    return fechaConsulta >= primerDiaMes;
-  });
+  // Función para formatear fecha
+  const formatearFecha = (fecha) => {
+    return new Date(fecha).toLocaleDateString('es-AR', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    });
+  };
+
+  // Función para formatear hora
+  const formatearHora = (fecha) => {
+    return new Date(fecha).toLocaleTimeString('es-AR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const estadoColor = {
+    pendiente: 'warning',
+    confirmado: 'success',
+    cancelado: 'danger',
+    completado: 'secondary'
+  };
 
   return (
     <Container>
-      <h1 className="mb-4">Dashboard</h1>
-
-      {/* Estadísticas */}
-      <Row className="mb-4">
-        <Col md={3}>
-          <Card className="text-center shadow-sm">
-            <Card.Body>
-              <FaUsers size={40} className="text-primary mb-2" />
-              <h3>{pacientes.length}</h3>
-              <p className="text-muted mb-0">Total Pacientes</p>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="text-center shadow-sm">
-            <Card.Body>
-              <FaCalendarAlt size={40} className="text-success mb-2" />
-              <h3>{turnosHoy.length}</h3>
-              <p className="text-muted mb-0">Turnos Hoy</p>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="text-center shadow-sm">
-            <Card.Body>
-              <FaStethoscope size={40} className="text-info mb-2" />
-              <h3>{consultasMes.length}</h3>
-              <p className="text-muted mb-0">Consultas del Mes</p>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="text-center shadow-sm">
-            <Card.Body>
-              <FaCalendarCheck size={40} className="text-warning mb-2" />
-              <h3>{turnosProximos.length}</h3>
-              <p className="text-muted mb-0">Próximos Turnos</p>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Accesos rápidos */}
+      {/* Turnos de Hoy */}
       <Row className="mb-4">
         <Col>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h2 className="mb-0">Turnos de Hoy</h2>
+            <Link to="/turnos/nuevo" className="btn btn-success">
+              <FaCalendarPlus className="me-2" />
+              Nuevo Turno
+            </Link>
+          </div>
           <Card className="shadow-sm">
-            <Card.Header>
-              <h5 className="mb-0">Accesos Rápidos</h5>
+            <Card.Header className="bg-primary text-white">
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">
+                  <FaClock className="me-2" />
+                  Agenda de Hoy
+                </h5>
+                <Badge bg="light" text="dark">{turnosHoy.length}</Badge>
+              </div>
             </Card.Header>
             <Card.Body>
-              <Row>
-                <Col md={4} className="mb-3 mb-md-0">
-                  <Link to="/pacientes/nuevo" className="btn btn-primary w-100">
-                    <FaUsers className="me-2" />
-                    Nuevo Paciente
-                  </Link>
-                </Col>
-                <Col md={4} className="mb-3 mb-md-0">
-                  <Link to="/consultas/nueva" className="btn btn-info w-100">
-                    <FaStethoscope className="me-2" />
-                    Nueva Consulta
-                  </Link>
-                </Col>
-                <Col md={4}>
-                  <Link to="/turnos/nuevo" className="btn btn-success w-100">
-                    <FaCalendarAlt className="me-2" />
-                    Nuevo Turno
-                  </Link>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+              {turnosHoy.length > 0 ? (
+                <>
+                  <div className="list-group list-group-flush">
+                    {turnosHoy.map(turno => {
+                      const paciente = pacientes.find(p => p.id === turno.pacienteId);
+                      const hora = formatearHora(turno.fechaHora);
 
-      {/* Turnos de hoy */}
-      {turnosHoy.length > 0 && (
-        <Row>
-          <Col>
-            <Card className="shadow-sm">
-              <Card.Header>
-                <h5 className="mb-0">Turnos de Hoy</h5>
-              </Card.Header>
-              <Card.Body>
-                <div className="list-group">
-                  {turnosHoy.slice(0, 5).map(turno => {
-                    const paciente = pacientes.find(p => p.id === turno.pacienteId);
-                    const hora = new Date(turno.fechaHora).toLocaleTimeString('es-AR', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    });
-                    
-                    const estadoColor = {
-                      pendiente: 'warning',
-                      confirmado: 'success',
-                      cancelado: 'danger',
-                      completado: 'secondary'
-                    };
-
-                    return (
-                      <div key={turno.id} className="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                          <strong>{hora}</strong> - {paciente?.nombreCompleto || 'Paciente no encontrado'}
-                          <br />
-                          <small className="text-muted">{turno.motivo}</small>
+                      return (
+                        <div key={turno.id} className="list-group-item px-0">
+                          <div className="d-flex justify-content-between align-items-start">
+                            <div className="flex-grow-1">
+                              <div className="d-flex align-items-center mb-1">
+                                <strong className="me-2" style={{ fontSize: '1.1rem' }}>{hora}</strong>
+                                <Badge bg={estadoColor[turno.estado]}>
+                                  {turno.estado}
+                                </Badge>
+                              </div>
+                              <div className="text-dark">{paciente?.nombreCompleto || 'Paciente no encontrado'}</div>
+                              <small className="text-muted">{turno.motivo}</small>
+                            </div>
+                          </div>
                         </div>
-                        <span className={`badge bg-${estadoColor[turno.estado]}`}>
-                          {turno.estado}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                {turnosHoy.length > 5 && (
+                      );
+                    })}
+                  </div>
                   <div className="text-center mt-3">
-                    <Link to="/turnos" className="btn btn-sm btn-outline-primary">
+                    <Link to="/turnos" className="btn btn-outline-primary">
                       Ver todos los turnos
                     </Link>
                   </div>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      )}
+                </>
+              ) : (
+                <div className="text-center text-muted py-4">
+                  <FaCalendarAlt size={40} className="mb-2 opacity-50" />
+                  <p className="mb-0">No hay turnos programados para hoy</p>
+                  <Link to="/turnos/nuevo" className="btn btn-success mt-3">
+                    <FaCalendarPlus className="me-2" />
+                    Agendar Turno
+                  </Link>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Próximos Turnos */}
+      <Row>
+        <Col>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h2 className="mb-0">Próximos Turnos</h2>
+            <Link to="/turnos" className="btn btn-primary">
+              <FaCalendarAlt className="me-2" />
+              Ver Todos los Turnos
+            </Link>
+          </div>
+          <Card className="shadow-sm">
+            <Card.Header className="bg-success text-white">
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">
+                  <FaCalendarCheck className="me-2" />
+                  Turnos Agendados
+                </h5>
+                <Badge bg="light" text="dark">{turnosProximos.length}</Badge>
+              </div>
+            </Card.Header>
+            <Card.Body>
+              {turnosProximos.length > 0 ? (
+                <>
+                  <div className="list-group list-group-flush">
+                    {turnosProximos.slice(0, 8).map(turno => {
+                      const paciente = pacientes.find(p => p.id === turno.pacienteId);
+                      const fecha = formatearFecha(turno.fechaHora);
+                      const hora = formatearHora(turno.fechaHora);
+
+                      return (
+                        <div key={turno.id} className="list-group-item px-0">
+                          <div className="d-flex justify-content-between align-items-start">
+                            <div className="flex-grow-1">
+                              <div className="d-flex align-items-center mb-1">
+                                <strong className="me-2">{fecha}</strong>
+                                <span className="text-muted me-2">•</span>
+                                <span className="me-2">{hora}</span>
+                                <Badge bg={estadoColor[turno.estado]}>
+                                  {turno.estado}
+                                </Badge>
+                              </div>
+                              <div className="text-dark">{paciente?.nombreCompleto || 'Paciente no encontrado'}</div>
+                              <small className="text-muted">{turno.motivo}</small>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {turnosProximos.length > 8 && (
+                    <div className="text-center mt-3">
+                      <Link to="/turnos" className="btn btn-outline-success">
+                        Ver todos los próximos turnos ({turnosProximos.length})
+                      </Link>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center text-muted py-4">
+                  <FaCalendarCheck size={40} className="mb-2 opacity-50" />
+                  <p className="mb-0">No hay próximos turnos programados</p>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Calendarios de 3 meses */}
+      <CalendarView />
     </Container>
   );
 };

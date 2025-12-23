@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Form, Button, Container, Row, Col, Card, Alert } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaSave, FaTimes } from 'react-icons/fa';
@@ -24,6 +24,7 @@ const PacienteForm = () => {
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const firstInputRef = useRef(null);
 
   // Cargar datos si es edición
   useEffect(() => {
@@ -47,6 +48,13 @@ const PacienteForm = () => {
       }
     }
   }, [id, pacientes, navigate]);
+
+  // Auto-focus en el primer campo al cargar el componente
+  useEffect(() => {
+    if (firstInputRef.current) {
+      firstInputRef.current.focus();
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -144,6 +152,7 @@ const PacienteForm = () => {
                 <Form.Group className="mb-3">
                   <Form.Label>Nombre Completo *</Form.Label>
                   <Form.Control
+                    ref={firstInputRef}
                     type="text"
                     name="nombreCompleto"
                     value={formData.nombreCompleto}
