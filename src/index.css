@@ -1,4 +1,4 @@
-/* Estilos globales personalizados */
+﻿/* Estilos globales personalizados */
 
 :root {
   --primary-color: #0d6efd;
@@ -146,10 +146,6 @@ body {
   cursor: default;
 }
 
-.mini-calendar-day.empty {
-  background-color: transparent;
-}
-
 .mini-calendar-day.today {
   background-color: #0d6efd;
   color: white;
@@ -161,87 +157,93 @@ body {
   border: 1px solid #0d6efd;
 }
 
-.mini-calendar-day.has-turnos:hover {
-  background-color: #cfe2ff;
-  transform: scale(1.05);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+/* Timeline Styles */
+.timeline {
+  position: relative;
 }
 
-.mini-calendar-day.today.has-turnos {
-  background-color: #0d6efd;
-  border: 2px solid #0a58ca;
-}
-
-.mini-calendar-day .day-number {
-  font-size: 0.75rem;
-  line-height: 1;
-}
-
-.mini-calendar-day .turnos-badge {
-  font-size: 0.6rem;
-  padding: 1px 4px;
-  margin-top: 2px;
-  line-height: 1;
-}
-
-.mini-calendar-day.today .turnos-badge {
-  background-color: white !important;
-  color: #0d6efd !important;
-}
-
-/* Responsive adjustments for calendar */
-@media (max-width: 768px) {
-  .day-name {
-    font-size: 0.65rem;
-  }
-
-  .mini-calendar-day .day-number {
-    font-size: 0.7rem;
-  }
-
-  .mini-calendar-day .turnos-badge {
-    font-size: 0.55rem;
-  }
-}
-
-/* Login Page Styles */
-.login-page {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
-}
-
-.login-page .card {
-  border-radius: 15px;
-  overflow: hidden;
-}
-
-.login-page .login-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.timeline-marker {
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: 3px solid white;
+  box-shadow: 0 0 0 2px #0d6efd;
 }
 
-.login-page .login-icon svg {
-  color: white;
+.timeline-line {
+  position: absolute;
+  left: 7px;
+  top: 16px;
+  width: 2px;
+  height: calc(100% + 16px);
+  background-color: #dee2e6;
 }
 
-.login-page .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  transition: transform 0.2s;
-}
+/* Estilos de Impresión Profesional */
+@media print {
+  @page {
+    size: A4;
+    margin: 8mm 5mm !important;
+  }
 
-.login-page .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
+  /* Ocultar elementos no deseados */
+  .no-print,
+  nav,
+  .navbar,
+  footer,
+  .btn,
+  button,
+  .d-flex.gap-2,
+  [class*='btn-'],
+  span.no-print,
+  div.no-print,
+  svg.no-print {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
 
-.login-page .form-control:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  /* Ajustar contenedores */
+  .print-container,
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 10pt !important;
+  }
+
+  .card {
+    border: 1px solid #eee !important;
+    box-shadow: none !important;
+    margin-bottom: 8px !important;
+  }
+
+  .text-end,
+  .text-md-end {
+    text-align: right !important;
+  }
+
+  .consulta-item {
+    border-bottom: 1px solid #eee !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 8px !important;
+    page-break-inside: avoid;
+  }
+
+  /* Forzar visibilidad de textos */
+  strong,
+  b {
+    color: black !important;
+  }
 }

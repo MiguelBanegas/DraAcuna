@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Badge, ListGroup, Alert } from 'react-bootstrap';
-import { FaEdit, FaArrowLeft, FaCalendarAlt, FaStethoscope, FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaIdCard } from 'react-icons/fa';
+import { FaEdit, FaArrowLeft, FaCalendarAlt, FaStethoscope, FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaIdCard, FaFileMedical } from 'react-icons/fa';
 import { usePacientes } from '../../context/PacientesContext';
 import { useConsultas } from '../../context/ConsultasContext';
 import { useTurnos } from '../../context/TurnosContext';
+import { useHistoriaClinica } from '../../context/HistoriaClinicaContext';
 
 const PacienteDetalle = () => {
   const { id } = useParams();
@@ -12,10 +13,12 @@ const PacienteDetalle = () => {
   const { pacientes } = usePacientes();
   const { obtenerConsultasPorPaciente } = useConsultas();
   const { obtenerTurnosPorPaciente } = useTurnos();
+  const { obtenerHistoriaClinicaPorPaciente } = useHistoriaClinica();
   
   const [paciente, setPaciente] = useState(null);
   const [consultas, setConsultas] = useState([]);
   const [turnos, setTurnos] = useState([]);
+  const [historiaClinica, setHistoriaClinica] = useState(null);
 
   useEffect(() => {
     const pacienteEncontrado = pacientes.find(p => p.id === id);
@@ -23,10 +26,11 @@ const PacienteDetalle = () => {
       setPaciente(pacienteEncontrado);
       setConsultas(obtenerConsultasPorPaciente(id));
       setTurnos(obtenerTurnosPorPaciente(id));
+      setHistoriaClinica(obtenerHistoriaClinicaPorPaciente(id));
     } else {
       navigate('/pacientes');
     }
-  }, [id, pacientes, navigate, obtenerConsultasPorPaciente, obtenerTurnosPorPaciente]);
+  }, [id, pacientes, navigate, obtenerConsultasPorPaciente, obtenerTurnosPorPaciente, obtenerHistoriaClinicaPorPaciente]);
 
   if (!paciente) {
     return null;
@@ -186,6 +190,45 @@ const PacienteDetalle = () => {
                       </div>
                     </ListGroup.Item>
                   )}
+
+          {/* Historia Clínica */}
+          <Card className="mt-3">
+            <Card.Header>
+              <h5 className="mb-0">
+                <FaFileMedical className="me-2" />
+                Historia Clínica
+              </h5>
+            </Card.Header>
+            <Card.Body>
+              {historiaClinica ? (
+                <>
+                  <p className="text-muted mb-2">
+                    <small>Última actualización: {formatearFecha(historiaClinica.fechaUltimaActualizacion)}</small>
+                  </p>
+                  <Button
+                    variant="primary"
+                    className="w-100"
+                    onClick={() => navigate(`/historia-clinica/${historiaClinica.id}`)}
+                  >
+                    Ver Historia Clínica
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="text-muted mb-3">
+                    No hay historia clínica creada para este paciente.
+                  </p>
+                  <Button
+                    variant="success"
+                    className="w-100"
+                    onClick={() => navigate(`/historia-clinica/nueva/${id}`)}
+                  >
+                    Crear Historia Clínica
+                  </Button>
+                </>
+              )}
+            </Card.Body>
+          </Card>
                 </ListGroup>
               </Card.Body>
             </Card>

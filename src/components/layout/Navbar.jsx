@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Navbar as BSNavbar, Container, Nav, Button } from 'react-bootstrap';
-import { FaUserMd, FaUsers, FaStethoscope, FaCalendarAlt, FaSignOutAlt } from 'react-icons/fa';
+import { FaUserMd, FaUsers, FaStethoscope, FaCalendarAlt, FaSignOutAlt, FaFileMedical } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
@@ -37,6 +37,10 @@ const Navbar = () => {
             <Nav.Link as={Link} to="/turnos">
               <FaCalendarAlt className="me-1" />
               Turnos
+            </Nav.Link>
+            <Nav.Link as={Link} to="/historia-clinica">
+              <FaFileMedical className="me-1" />
+              Historia Clínica
             </Nav.Link>
           </Nav>
           {user && (

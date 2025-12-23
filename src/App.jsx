@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { PacientesProvider } from './context/PacientesContext';
 import { ConsultasProvider } from './context/ConsultasContext';
 import { TurnosProvider } from './context/TurnosContext';
+import { HistoriaClinicaProvider } from './context/HistoriaClinicaContext';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import Navbar from './components/layout/Navbar';
 import Login from './pages/Login';
@@ -15,6 +16,9 @@ import ConsultaForm from './components/consultas/ConsultaForm';
 import ConsultaDetalle from './components/consultas/ConsultaDetalle';
 import Turnos from './pages/Turnos';
 import TurnoForm from './components/turnos/TurnoForm';
+import HistoriaClinica from './pages/HistoriaClinica';
+import HistoriaClinicaForm from './components/historiaClinica/HistoriaClinicaForm';
+import HistoriaClinicaDetalle from './components/historiaClinica/HistoriaClinicaDetalle';
 
 function App() {
   return (
@@ -23,6 +27,7 @@ function App() {
         <PacientesProvider>
           <ConsultasProvider>
             <TurnosProvider>
+              <HistoriaClinicaProvider>
               <Routes>
                 {/* Ruta pública de Login */}
                 <Route path="/login" element={<Login />} />
@@ -54,6 +59,12 @@ function App() {
                           <Route path="/turnos/nuevo" element={<TurnoForm />} />
                           <Route path="/turnos/:id/editar" element={<TurnoForm />} />
                           
+                          {/* Rutas de Historia Clínica */}
+                          <Route path="/historia-clinica" element={<HistoriaClinica />} />
+                          <Route path="/historia-clinica/nueva/:pacienteId" element={<HistoriaClinicaForm />} />
+                          <Route path="/historia-clinica/:id" element={<HistoriaClinicaDetalle />} />
+                          <Route path="/historia-clinica/:id/editar" element={<HistoriaClinicaForm />} />
+                          
                           {/* Ruta por defecto */}
                           <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
@@ -62,6 +73,7 @@ function App() {
                   }
                 />
               </Routes>
+              </HistoriaClinicaProvider>
             </TurnosProvider>
           </ConsultasProvider>
         </PacientesProvider>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Form, Button, Container, Row, Col, Card, Alert } from 'react-bootstrap';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { FaSave, FaTimes } from 'react-icons/fa';
+import Select from 'react-select';
 import { useConsultas } from '../../context/ConsultasContext';
 import { usePacientes } from '../../context/PacientesContext';
 
@@ -19,23 +20,33 @@ const ConsultaForm = () => {
     diagnostico: '',
     tratamiento: '',
     observaciones: '',
-    proximaConsulta: ''
+    proximaConsulta: '',
+    // Signos Vitales
+    signosVitales: {
+      presionArterial: {
+        sistolica: '',
+        diastolica: ''
+      },
+      frecuenciaCardiaca: '',
+      temperatura: '',
+      frecuenciaRespiratoria: '',
+      saturacionO2: '',
+      peso: '',
+      talla: '',
+      imc: ''
+    }
   });
 
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  const [searchPaciente, setSearchPaciente] = useState('');
 
-  // Filtrar pacientes según búsqueda
-  const pacientesFiltrados = pacientes.filter(p => {
-    if (!searchPaciente.trim()) return true;
-    const searchLower = searchPaciente.toLowerCase();
-    return (
-      p.nombreCompleto?.toLowerCase().includes(searchLower) ||
-      p.dni?.toLowerCase().includes(searchLower)
-    );
-  });
+  // Preparar opciones para react-select
+  const pacientesOptions = pacientes.map(p => ({
+    value: p.id,
+    label: `${p.nombreCompleto} - DNI: ${p.dni}`,
+    paciente: p
+  }));
 
   // Cargar datos si es edición
   useEffect(() => {
@@ -50,7 +61,17 @@ const ConsultaForm = () => {
           diagnostico: consulta.diagnostico || '',
           tratamiento: consulta.tratamiento || '',
           observaciones: consulta.observaciones || '',
-          proximaConsulta: consulta.proximaConsulta || ''
+          proximaConsulta: consulta.proximaConsulta || '',
+          signosVitales: consulta.signosVitales || {
+            presionArterial: { sistolica: '', diastolica: '' },
+            frecuenciaCardiaca: '',
+            temperatura: '',
+            frecuenciaRespiratoria: '',
+            saturacionO2: '',
+            peso: '',
+            talla: '',
+            imc: ''
+          }
         });
       } else {
         navigate('/consultas');
@@ -79,6 +100,44 @@ const ConsultaForm = () => {
         [name]: ''
       }));
     }
+  };
+
+  // Manejar cambios en signos vitales
+  const handleSignosVitalesChange = (e) => {
+    const { name, value } = e.target;
+    const keys = name.split('.');
+    
+    setFormData(prev => {
+      const newFormData = { ...prev };
+      
+      if (keys.length === 2) {
+        // Para campos simples como temperatura, peso, etc.
+        newFormData.signosVitales = {
+          ...prev.signosVitales,
+          [keys[1]]: value
+        };
+      } else if (keys.length === 3) {
+        // Para presión arterial (sistólica/diastólica)
+        newFormData.signosVitales = {
+          ...prev.signosVitales,
+          presionArterial: {
+            ...prev.signosVitales.presionArterial,
+            [keys[2]]: value
+          }
+        };
+      }
+      
+      // Calcular IMC automáticamente si hay peso y talla
+      if ((keys[1] === 'peso' || keys[1] === 'talla') && newFormData.signosVitales.peso && newFormData.signosVitales.talla) {
+        const peso = parseFloat(newFormData.signosVitales.peso);
+        const talla = parseFloat(newFormData.signosVitales.talla) / 100; // convertir cm a m
+        if (peso > 0 && talla > 0) {
+          newFormData.signosVitales.imc = (peso / (talla * talla)).toFixed(2);
+        }
+      }
+      
+      return newFormData;
+    });
   };
 
   const validateForm = () => {
@@ -163,38 +222,46 @@ const ConsultaForm = () => {
               <Col md={8}>
                 <Form.Group className="mb-3">
                   <Form.Label>Paciente *</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Buscar por nombre o DNI..."
-                    value={searchPaciente}
-                    onChange={(e) => setSearchPaciente(e.target.value)}
-                    className="mb-2"
+                  <Select
+                    options={pacientesOptions}
+                    value={pacientesOptions.find(opt => opt.value === formData.pacienteId) || null}
+                    onChange={(selectedOption) => {
+                      setFormData(prev => ({ ...prev, pacienteId: selectedOption ? selectedOption.value : '' }));
+                      if (errors.pacienteId) {
+                        setErrors(prev => ({ ...prev, pacienteId: '' }));
+                      }
+                    }}
+                    placeholder="Buscar paciente por nombre o DNI..."
+                    isClearable
+                    isSearchable
+                    noOptionsMessage={() => "No se encontraron pacientes"}
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        borderColor: errors.pacienteId ? '#dc3545' : state.isFocused ? '#0d6efd' : base.borderColor,
+                        '&:hover': {
+                          borderColor: errors.pacienteId ? '#dc3545' : '#0d6efd'
+                        },
+                        boxShadow: state.isFocused ? (errors.pacienteId ? '0 0 0 0.2rem rgba(220, 53, 69, 0.25)' : '0 0 0 0.2rem rgba(13, 110, 253, 0.25)') : 'none'
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 9999
+                      })
+                    }}
+                    autoFocus
                   />
-                  <Form.Select
-                    name="pacienteId"
-                    value={formData.pacienteId}
-                    onChange={handleChange}
-                    isInvalid={!!errors.pacienteId}
-                    size="lg"
-                  >
-                    <option value="">Seleccione un paciente...</option>
-                    {pacientesFiltrados.length === 0 ? (
-                      <option disabled>No se encontraron pacientes</option>
-                    ) : (
-                      pacientesFiltrados.map(p => (
-                        <option key={p.id} value={p.id}>
-                          {p.nombreCompleto} - DNI: {p.dni}
-                        </option>
-                      ))
-                    )}
-                  </Form.Select>
-                  <Form.Control.Feedback type="invalid">
-                    {errors.pacienteId}
-                  </Form.Control.Feedback>
-                  {searchPaciente && pacientesFiltrados.length > 0 && (
-                    <Form.Text className="text-muted">
-                      {pacientesFiltrados.length} paciente{pacientesFiltrados.length !== 1 ? 's' : ''} encontrado{pacientesFiltrados.length !== 1 ? 's' : ''}
-                    </Form.Text>
+                  {errors.pacienteId && (
+                    <div className="invalid-feedback d-block">
+                      {errors.pacienteId}
+                    </div>
+                  )}
+                  {formData.pacienteId && (
+                    <div className="mt-2">
+                      <small className="text-success">
+                        ✓ Paciente seleccionado
+                      </small>
+                    </div>
                   )}
                 </Form.Group>
               </Col>
@@ -224,6 +291,166 @@ const ConsultaForm = () => {
                 )}
               </Alert>
             )}
+
+            {/* Signos Vitales */}
+            <Card className="mb-3 border-primary">
+              <Card.Header className="bg-primary text-white">
+                <h5 className="mb-0">Signos Vitales</h5>
+              </Card.Header>
+              <Card.Body>
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Presión Arterial (mmHg)</Form.Label>
+                      <Row>
+                        <Col>
+                          <Form.Control
+                            type="number"
+                            name="signosVitales.presionArterial.sistolica"
+                            value={formData.signosVitales.presionArterial.sistolica}
+                            onChange={handleSignosVitalesChange}
+                            placeholder="Sistólica"
+                            min="0"
+                            max="300"
+                          />
+                          <Form.Text className="text-muted">Sistólica</Form.Text>
+                        </Col>
+                        <Col>
+                          <Form.Control
+                            type="number"
+                            name="signosVitales.presionArterial.diastolica"
+                            value={formData.signosVitales.presionArterial.diastolica}
+                            onChange={handleSignosVitalesChange}
+                            placeholder="Diastólica"
+                            min="0"
+                            max="200"
+                          />
+                          <Form.Text className="text-muted">Diastólica</Form.Text>
+                        </Col>
+                      </Row>
+                    </Form.Group>
+                  </Col>
+
+                  <Col md={3}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Frecuencia Cardíaca (lpm)</Form.Label>
+                      <Form.Control
+                        type="number"
+                        name="signosVitales.frecuenciaCardiaca"
+                        value={formData.signosVitales.frecuenciaCardiaca}
+                        onChange={handleSignosVitalesChange}
+                        placeholder="72"
+                        min="0"
+                        max="300"
+                      />
+                    </Form.Group>
+                  </Col>
+
+                  <Col md={3}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Temperatura (°C)</Form.Label>
+                      <Form.Control
+                        type="number"
+                        step="0.1"
+                        name="signosVitales.temperatura"
+                        value={formData.signosVitales.temperatura}
+                        onChange={handleSignosVitalesChange}
+                        placeholder="36.5"
+                        min="30"
+                        max="45"
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={3}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Frec. Respiratoria (rpm)</Form.Label>
+                      <Form.Control
+                        type="number"
+                        name="signosVitales.frecuenciaRespiratoria"
+                        value={formData.signosVitales.frecuenciaRespiratoria}
+                        onChange={handleSignosVitalesChange}
+                        placeholder="16"
+                        min="0"
+                        max="100"
+                      />
+                    </Form.Group>
+                  </Col>
+
+                  <Col md={3}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Saturación O₂ (%)</Form.Label>
+                      <Form.Control
+                        type="number"
+                        name="signosVitales.saturacionO2"
+                        value={formData.signosVitales.saturacionO2}
+                        onChange={handleSignosVitalesChange}
+                        placeholder="98"
+                        min="0"
+                        max="100"
+                      />
+                    </Form.Group>
+                  </Col>
+
+                  <Col md={2}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Peso (kg)</Form.Label>
+                      <Form.Control
+                        type="number"
+                        step="0.1"
+                        name="signosVitales.peso"
+                        value={formData.signosVitales.peso}
+                        onChange={handleSignosVitalesChange}
+                        placeholder="70"
+                        min="0"
+                        max="500"
+                      />
+                    </Form.Group>
+                  </Col>
+
+                  <Col md={2}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Talla (cm)</Form.Label>
+                      <Form.Control
+                        type="number"
+                        name="signosVitales.talla"
+                        value={formData.signosVitales.talla}
+                        onChange={handleSignosVitalesChange}
+                        placeholder="170"
+                        min="0"
+                        max="250"
+                      />
+                    </Form.Group>
+                  </Col>
+
+                  <Col md={2}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>IMC</Form.Label>
+                      <Form.Control
+                        type="text"
+                        value={formData.signosVitales.imc}
+                        readOnly
+                        placeholder="Auto"
+                        className="bg-light"
+                      />
+                      {formData.signosVitales.imc && (
+                        <Form.Text className={
+                          formData.signosVitales.imc < 18.5 ? 'text-warning' :
+                          formData.signosVitales.imc > 24.9 ? 'text-danger' :
+                          'text-success'
+                        }>
+                          {formData.signosVitales.imc < 18.5 ? 'Bajo' :
+                           formData.signosVitales.imc > 24.9 ? 'Alto' :
+                           'Normal'}
+                        </Form.Text>
+                      )}
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
 
             <Form.Group className="mb-3">
               <Form.Label>Motivo de Consulta *</Form.Label>

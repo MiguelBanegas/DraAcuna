@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Form, Button, Container, Row, Col, Card, Alert } from 'react-bootstrap';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { FaSave, FaTimes } from 'react-icons/fa';
+import Select from 'react-select';
 import { useTurnos } from '../../context/TurnosContext';
 import { usePacientes } from '../../context/PacientesContext';
 
@@ -24,18 +25,14 @@ const TurnoForm = () => {
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  const [searchPaciente, setSearchPaciente] = useState('');
-  const searchInputRef = useRef(null);
+  const selectRef = useRef(null);
 
-  // Filtrar pacientes según búsqueda
-  const pacientesFiltrados = pacientes.filter(p => {
-    if (!searchPaciente.trim()) return true;
-    const searchLower = searchPaciente.toLowerCase();
-    return (
-      p.nombreCompleto?.toLowerCase().includes(searchLower) ||
-      p.dni?.toLowerCase().includes(searchLower)
-    );
-  });
+  // Preparar opciones para react-select
+  const pacientesOptions = pacientes.map(p => ({
+    value: p.id,
+    label: `${p.nombreCompleto} - DNI: ${p.dni}`,
+    paciente: p
+  }));
 
   // Cargar datos si es edición
   useEffect(() => {
@@ -181,78 +178,46 @@ const TurnoForm = () => {
               <Col md={8}>
                 <Form.Group className="mb-3">
                   <Form.Label>Paciente *</Form.Label>
-                  <Form.Control
-                    ref={searchInputRef}
-                    type="text"
-                    placeholder="Buscar por nombre o DNI..."
-                    value={searchPaciente}
-                    onChange={(e) => setSearchPaciente(e.target.value)}
-                    isInvalid={!!errors.pacienteId}
+                  <Select
+                    ref={selectRef}
+                    options={pacientesOptions}
+                    value={pacientesOptions.find(opt => opt.value === formData.pacienteId) || null}
+                    onChange={(selectedOption) => {
+                      setFormData(prev => ({ ...prev, pacienteId: selectedOption ? selectedOption.value : '' }));
+                      if (errors.pacienteId) {
+                        setErrors(prev => ({ ...prev, pacienteId: '' }));
+                      }
+                    }}
+                    placeholder="Buscar paciente por nombre o DNI..."
+                    isClearable
+                    isSearchable
+                    noOptionsMessage={() => "No se encontraron pacientes"}
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        borderColor: errors.pacienteId ? '#dc3545' : state.isFocused ? '#0d6efd' : base.borderColor,
+                        '&:hover': {
+                          borderColor: errors.pacienteId ? '#dc3545' : '#0d6efd'
+                        },
+                        boxShadow: state.isFocused ? (errors.pacienteId ? '0 0 0 0.2rem rgba(220, 53, 69, 0.25)' : '0 0 0 0.2rem rgba(13, 110, 253, 0.25)') : 'none'
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 9999
+                      })
+                    }}
+                    autoFocus
                   />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.pacienteId}
-                  </Form.Control.Feedback>
-                  
-                  {/* Lista de pacientes filtrados */}
-                  {searchPaciente && (
-                    <div 
-                      className="border rounded mt-2" 
-                      style={{ 
-                        maxHeight: '250px', 
-                        overflowY: 'auto',
-                        backgroundColor: '#fff'
-                      }}
-                    >
-                      {pacientesFiltrados.length === 0 ? (
-                        <div className="p-3 text-center text-muted">
-                          <small>✗ No se encontraron pacientes con ese criterio</small>
-                        </div>
-                      ) : (
-                        <div className="list-group list-group-flush">
-                          {pacientesFiltrados.map(p => (
-                            <button
-                              key={p.id}
-                              type="button"
-                              className={`list-group-item list-group-item-action ${formData.pacienteId === p.id ? 'active' : ''}`}
-                              onClick={() => {
-                                setFormData(prev => ({ ...prev, pacienteId: p.id }));
-                                setSearchPaciente('');
-                                if (errors.pacienteId) {
-                                  setErrors(prev => ({ ...prev, pacienteId: '' }));
-                                }
-                              }}
-                            >
-                              <div className="d-flex justify-content-between align-items-start">
-                                <div>
-                                  <strong>{p.nombreCompleto}</strong>
-                                  <br />
-                                  <small>DNI: {p.dni}</small>
-                                  {p.telefono && (
-                                    <>
-                                      <br />
-                                      <small>Tel: {p.telefono}</small>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      <div className="p-2 bg-light border-top">
-                        <small className="text-success">
-                          ✓ {pacientesFiltrados.length} paciente{pacientesFiltrados.length !== 1 ? 's' : ''} encontrado{pacientesFiltrados.length !== 1 ? 's' : ''}
-                        </small>
-                      </div>
+                  {errors.pacienteId && (
+                    <div className="invalid-feedback d-block">
+                      {errors.pacienteId}
                     </div>
                   )}
-                  
-                  {/* Mostrar paciente seleccionado */}
-                  {formData.pacienteId && !searchPaciente && (
-                    <div className="mt-2 p-2 bg-light border rounded">
-                      <small className="text-muted">Paciente seleccionado:</small>
-                      <br />
-                      <strong>{pacientes.find(p => p.id === formData.pacienteId)?.nombreCompleto}</strong>
+                  {formData.pacienteId && (
+                    <div className="mt-2">
+                      <small className="text-success">
+                        ✓ Paciente seleccionado
+                      </small>
                     </div>
                   )}
                 </Form.Group>

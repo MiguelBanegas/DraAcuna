@@ -166,6 +166,144 @@ const ConsultaDetalle = () => {
 
         {/* Detalles de la Consulta */}
         <Col md={8}>
+          {/* Signos Vitales */}
+          {consulta.signosVitales && (
+            consulta.signosVitales.presionArterial?.sistolica ||
+            consulta.signosVitales.frecuenciaCardiaca ||
+            consulta.signosVitales.temperatura ||
+            consulta.signosVitales.peso
+          ) && (
+            <Card className="mb-3 border-primary">
+              <Card.Header className="bg-primary text-white">
+                <h5 className="mb-0">Signos Vitales</h5>
+              </Card.Header>
+              <Card.Body>
+                <Row>
+                  {consulta.signosVitales.presionArterial?.sistolica && (
+                    <Col md={4} className="mb-3">
+                      <div className="d-flex align-items-center">
+                        <div className="me-3">
+                          <i className="fas fa-heartbeat text-danger" style={{ fontSize: '1.5rem' }}></i>
+                        </div>
+                        <div>
+                          <small className="text-muted d-block">Presión Arterial</small>
+                          <strong>{consulta.signosVitales.presionArterial.sistolica}/{consulta.signosVitales.presionArterial.diastolica} mmHg</strong>
+                        </div>
+                      </div>
+                    </Col>
+                  )}
+                  
+                  {consulta.signosVitales.frecuenciaCardiaca && (
+                    <Col md={4} className="mb-3">
+                      <div className="d-flex align-items-center">
+                        <div className="me-3">
+                          <i className="fas fa-heart text-danger" style={{ fontSize: '1.5rem' }}></i>
+                        </div>
+                        <div>
+                          <small className="text-muted d-block">Frecuencia Cardíaca</small>
+                          <strong>{consulta.signosVitales.frecuenciaCardiaca} lpm</strong>
+                        </div>
+                      </div>
+                    </Col>
+                  )}
+                  
+                  {consulta.signosVitales.temperatura && (
+                    <Col md={4} className="mb-3">
+                      <div className="d-flex align-items-center">
+                        <div className="me-3">
+                          <i className="fas fa-thermometer-half text-warning" style={{ fontSize: '1.5rem' }}></i>
+                        </div>
+                        <div>
+                          <small className="text-muted d-block">Temperatura</small>
+                          <strong>{consulta.signosVitales.temperatura} °C</strong>
+                        </div>
+                      </div>
+                    </Col>
+                  )}
+                  
+                  {consulta.signosVitales.frecuenciaRespiratoria && (
+                    <Col md={4} className="mb-3">
+                      <div className="d-flex align-items-center">
+                        <div className="me-3">
+                          <i className="fas fa-lungs text-info" style={{ fontSize: '1.5rem' }}></i>
+                        </div>
+                        <div>
+                          <small className="text-muted d-block">Frec. Respiratoria</small>
+                          <strong>{consulta.signosVitales.frecuenciaRespiratoria} rpm</strong>
+                        </div>
+                      </div>
+                    </Col>
+                  )}
+                  
+                  {consulta.signosVitales.saturacionO2 && (
+                    <Col md={4} className="mb-3">
+                      <div className="d-flex align-items-center">
+                        <div className="me-3">
+                          <i className="fas fa-wind text-primary" style={{ fontSize: '1.5rem' }}></i>
+                        </div>
+                        <div>
+                          <small className="text-muted d-block">Saturación O₂</small>
+                          <strong>{consulta.signosVitales.saturacionO2} %</strong>
+                        </div>
+                      </div>
+                    </Col>
+                  )}
+                  
+                  {consulta.signosVitales.peso && (
+                    <Col md={4} className="mb-3">
+                      <div className="d-flex align-items-center">
+                        <div className="me-3">
+                          <i className="fas fa-weight text-secondary" style={{ fontSize: '1.5rem' }}></i>
+                        </div>
+                        <div>
+                          <small className="text-muted d-block">Peso</small>
+                          <strong>{consulta.signosVitales.peso} kg</strong>
+                        </div>
+                      </div>
+                    </Col>
+                  )}
+                  
+                  {consulta.signosVitales.talla && (
+                    <Col md={4} className="mb-3">
+                      <div className="d-flex align-items-center">
+                        <div className="me-3">
+                          <i className="fas fa-ruler-vertical text-secondary" style={{ fontSize: '1.5rem' }}></i>
+                        </div>
+                        <div>
+                          <small className="text-muted d-block">Talla</small>
+                          <strong>{consulta.signosVitales.talla} cm</strong>
+                        </div>
+                      </div>
+                    </Col>
+                  )}
+                  
+                  {consulta.signosVitales.imc && (
+                    <Col md={4} className="mb-3">
+                      <div className="d-flex align-items-center">
+                        <div className="me-3">
+                          <i className="fas fa-calculator text-success" style={{ fontSize: '1.5rem' }}></i>
+                        </div>
+                        <div>
+                          <small className="text-muted d-block">IMC</small>
+                          <strong>{consulta.signosVitales.imc}</strong>
+                          <small className={`ms-2 ${
+                            consulta.signosVitales.imc < 18.5 ? 'text-warning' :
+                            consulta.signosVitales.imc > 24.9 ? 'text-danger' :
+                            'text-success'
+                          }`}>
+                            ({consulta.signosVitales.imc < 18.5 ? 'Bajo' :
+                              consulta.signosVitales.imc > 24.9 ? 'Alto' :
+                              'Normal'})
+                          </small>
+                        </div>
+                      </div>
+                    </Col>
+                  )}
+                </Row>
+              </Card.Body>
+            </Card>
+          )}
+
           <Card className="mb-3">
             <Card.Header>
               <h5 className="mb-0">
