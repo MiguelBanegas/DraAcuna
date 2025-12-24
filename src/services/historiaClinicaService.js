@@ -81,3 +81,17 @@ export const updateHistoriaClinica = async (id, historia) => {
     throw error;
   }
 };
+
+export const deleteHistoriaClinica = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/historia-clinica/${id}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error("Error al eliminar historia clínica");
+    return true;
+  } catch (error) {
+    console.error("Error al eliminar historia clínica:", error);
+    throw error;
+  }
+};

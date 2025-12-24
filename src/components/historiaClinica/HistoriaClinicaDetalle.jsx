@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Badge, Form } from 'react-bootstrap';
-import { FaArrowLeft, FaEdit, FaPrint, FaEye, FaSave } from 'react-icons/fa';
+import { FaArrowLeft, FaEdit, FaPrint, FaEye, FaSave, FaTrash } from 'react-icons/fa';
 import { useHistoriaClinica } from '../../context/HistoriaClinicaContext';
 import { usePacientes } from '../../context/PacientesContext';
 import { useConsultas } from '../../context/ConsultasContext';
@@ -9,7 +9,7 @@ import { useConsultas } from '../../context/ConsultasContext';
 const HistoriaClinicaDetalle = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { historiasClinicas, actualizarHistoriaClinica } = useHistoriaClinica();
+  const { historiasClinicas, actualizarHistoriaClinica, eliminarHistoriaClinica } = useHistoriaClinica();
   const { pacientes } = usePacientes();
   const { obtenerConsultasPorPaciente } = useConsultas();
   
@@ -82,6 +82,18 @@ const HistoriaClinicaDetalle = () => {
     window.print();
   };
 
+  const handleEliminar = async () => {
+    if (window.confirm('¿Está seguro de que desea eliminar esta historia clínica? Esta acción no se puede deshacer.')) {
+      try {
+        await eliminarHistoriaClinica(id);
+        navigate('/historia-clinica');
+      } catch (error) {
+        alert('Error al eliminar la historia clínica');
+        console.error('Error al eliminar:', error);
+      }
+    }
+  };
+
   return (
     <div className="historia-clinica-container">
       <Container className="no-print mb-4">
@@ -98,6 +110,14 @@ const HistoriaClinicaDetalle = () => {
             <div className="d-flex justify-content-between align-items-center no-print">
               <h2 className="no-print">Historia Clínica - Resumen</h2>
               <div className="d-flex gap-2 no-print">
+                <Button 
+                  variant="danger" 
+                  onClick={handleEliminar}
+                  className="no-print"
+                >
+                  <FaTrash className="me-2 no-print" />
+                  Eliminar
+                </Button>
                 <Button 
                   variant="primary" 
                   onClick={handleImprimir}
@@ -188,7 +208,7 @@ const HistoriaClinicaDetalle = () => {
                     ) && (
                       <div className="mt-2 p-2 rounded" style={{ border: '1px solid #f0f0f0', backgroundColor: '#fafafa' }}>
                         <small className="d-block mb-1 text-uppercase text-muted fw-bold" style={{ fontSize: '0.7rem' }}>Signos Vitales:</small>
-                        <div className="d-flex flex-wrap gap-x-4 gap-y-1">
+                        <div className="d-flex flex-wrap gap-3">
                           {consulta.signosVitales.presionArterial?.sistolica && (
                             <div style={{ minWidth: '100px' }}>
                               <span style={{ fontSize: '0.8rem' }} className="text-muted">P.A.: </span>

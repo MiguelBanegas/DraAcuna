@@ -62,13 +62,25 @@ export const HistoriaClinicaProvider = ({ children }) => {
     }
   };
 
+  const eliminarHistoriaClinica = async (id) => {
+    try {
+      await historiaClinicaService.deleteHistoriaClinica(id);
+      setHistoriasClinicas(prev => prev.filter(h => h.id != id));
+      return true;
+    } catch (error) {
+      console.error('Error al eliminar historia clínica:', error);
+      throw error;
+    }
+  };
+
   const value = {
     historiasClinicas,
     loading,
     cargarHistorias,
     obtenerHistoriaClinicaPorPaciente,
     agregarHistoriaClinica,
-    actualizarHistoriaClinica
+    actualizarHistoriaClinica,
+    eliminarHistoriaClinica
   };
 
   return <HistoriaClinicaContext.Provider value={value}>{children}</HistoriaClinicaContext.Provider>;

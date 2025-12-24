@@ -10,8 +10,8 @@ export const getAllHistoriasClinicas = async (req, res) => {
     `);
     res.json(result.rows);
   } catch (error) {
-    console.error('Error al obtener historias cl�nicas:', error);
-    res.status(500).json({ error: 'Error al obtener historias cl�nicas' });
+    console.error("Error al obtener historias clínicas:", error);
+    res.status(500).json({ error: "Error al obtener historias clínicas" });
   }
 };
 
@@ -74,5 +74,23 @@ export const updateHistoriaClinica = async (req, res) => {
   } catch (error) {
     console.error("Error en updateHistoriaClinica:", error);
     res.status(500).json({ error: "Error al actualizar la historia clínica" });
+  }
+};
+
+// Eliminar historia clínica
+export const deleteHistoriaClinica = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await db.query(
+      "DELETE FROM historias_clinicas WHERE id = $1",
+      [id]
+    );
+    if (rowCount === 0) {
+      return res.status(404).json({ error: "Historia clínica no encontrada" });
+    }
+    res.json({ message: "Historia clínica eliminada correctamente" });
+  } catch (error) {
+    console.error("Error en deleteHistoriaClinica:", error);
+    res.status(500).json({ error: "Error al eliminar la historia clínica" });
   }
 };
