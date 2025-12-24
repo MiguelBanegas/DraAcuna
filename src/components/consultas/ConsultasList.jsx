@@ -57,14 +57,7 @@ const ConsultasList = () => {
       <Row className="mb-4">
         <Col>
           <div className="d-flex justify-content-between align-items-center">
-            <h2>Consultas Médicas</h2>
-            <Button 
-              variant="primary" 
-              onClick={() => navigate('/consultas/nueva')}
-            >
-              <FaPlus className="me-2" />
-              Nueva Consulta
-            </Button>
+            <h2>Historial de Consultas Médicas</h2>
           </div>
         </Col>
       </Row>
@@ -98,7 +91,7 @@ const ConsultasList = () => {
                 ))}
               </Form.Select>
             </Col>
-            <Col md={3}>
+            <Col md={4}>
               <Form.Control
                 type="date"
                 value={filtroFecha}
@@ -106,34 +99,43 @@ const ConsultasList = () => {
                 placeholder="Filtrar por fecha"
               />
             </Col>
-            <Col md={1}>
+          </Row>
+
+          <Row className="mt-3">
+            <Col className="d-flex gap-2">
               <Button 
                 variant="primary" 
-                className="w-100" 
                 onClick={handleConsultar}
                 disabled={loadingSearch}
+                className="d-flex align-items-center"
               >
-                {loadingSearch ? '...' : <FaSearch />} Consultar
+                {loadingSearch ? '...' : <FaSearch className="me-2" />} 
+                Consultar
               </Button>
-            </Col>
-          </Row>
-          {(searchTerm || filtroFecha || filtroPaciente) && (
-            <Row className="mt-2">
-              <Col>
+              <Button 
+                variant="success" 
+                onClick={() => navigate('/consultas/nueva')}
+                className="d-flex align-items-center"
+              >
+                <FaPlus className="me-2" />
+                Nueva Consulta
+              </Button>
+              
+              {(searchTerm || filtroFecha || filtroPaciente) && (
                 <Button 
-                  size="sm" 
                   variant="outline-secondary"
                   onClick={() => {
                     setSearchTerm('');
                     setFiltroFecha('');
                     setFiltroPaciente('');
                   }}
+                  className="ms-auto"
                 >
                   Limpiar filtros
                 </Button>
-              </Col>
-            </Row>
-          )}
+              )}
+            </Col>
+          </Row>
         </Card.Body>
       </Card>
 
