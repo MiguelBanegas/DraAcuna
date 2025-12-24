@@ -247,3 +247,10 @@ body {
     color: black !important;
   }
 }
+
+/* Estilos para placeholders más sutiles */
+.placeholder-subtle::placeholder {
+  color: #adb5bd !important;
+  opacity: 0.6 !important;
+  font-weight: 300 !important;
+}

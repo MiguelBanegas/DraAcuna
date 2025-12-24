@@ -7,11 +7,12 @@ import { usePacientes } from '../../context/PacientesContext';
 
 const ConsultasList = () => {
   const navigate = useNavigate();
-  const { consultas, eliminarConsulta } = useConsultas();
+  const { consultas, eliminarConsulta, buscarConsultas } = useConsultas();
   const { pacientes } = usePacientes();
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroFecha, setFiltroFecha] = useState('');
   const [filtroPaciente, setFiltroPaciente] = useState('');
+  const [loadingSearch, setLoadingSearch] = useState(false);
   const searchInputRef = useRef(null);
 
   // Auto-focus en el campo de búsqueda al cargar el componente
@@ -21,34 +22,15 @@ const ConsultasList = () => {
     }
   }, []);
 
-  // Filtrar consultas
-  const consultasFiltradas = consultas.filter(consulta => {
-    const paciente = pacientes.find(p => p.id === consulta.pacienteId);
-    const nombrePaciente = paciente?.nombreCompleto || '';
-    const dniPaciente = paciente?.dni || '';
-    
-    const cumpleBusqueda = searchTerm === '' || 
-      nombrePaciente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dniPaciente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      consulta.motivo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      consulta.diagnostico?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Comparar solo la fecha sin la hora
-    let cumpleFecha = true;
-    if (filtroFecha) {
-      const fechaConsulta = new Date(consulta.fechaHora);
-      const fechaFiltro = new Date(filtroFecha);
-      cumpleFecha = (
-        fechaConsulta.getFullYear() === fechaFiltro.getFullYear() &&
-        fechaConsulta.getMonth() === fechaFiltro.getMonth() &&
-        fechaConsulta.getDate() === fechaFiltro.getDate()
-      );
-    }
-    
-    const cumplePaciente = filtroPaciente === '' || consulta.pacienteId === filtroPaciente;
-    
-    return cumpleBusqueda && cumpleFecha && cumplePaciente;
-  });
+  const handleConsultar = async () => {
+    setLoadingSearch(true);
+    await buscarConsultas({
+      q: searchTerm,
+      pacienteId: filtroPaciente,
+      fecha: filtroFecha
+    });
+    setLoadingSearch(false);
+  };
 
   const handleDelete = async (id, pacienteNombre) => {
     if (window.confirm(`¿Está seguro de eliminar esta consulta de ${pacienteNombre}?`)) {
@@ -116,13 +98,23 @@ const ConsultasList = () => {
                 ))}
               </Form.Select>
             </Col>
-            <Col md={4}>
+            <Col md={3}>
               <Form.Control
                 type="date"
                 value={filtroFecha}
                 onChange={(e) => setFiltroFecha(e.target.value)}
                 placeholder="Filtrar por fecha"
               />
+            </Col>
+            <Col md={1}>
+              <Button 
+                variant="primary" 
+                className="w-100" 
+                onClick={handleConsultar}
+                disabled={loadingSearch}
+              >
+                {loadingSearch ? '...' : <FaSearch />} Consultar
+              </Button>
             </Col>
           </Row>
           {(searchTerm || filtroFecha || filtroPaciente) && (
@@ -148,29 +140,20 @@ const ConsultasList = () => {
       <Row className="mb-3">
         <Col className="text-end">
           <Badge bg="secondary" className="fs-6">
-            {consultasFiltradas.length} consulta{consultasFiltradas.length !== 1 ? 's' : ''}
+            {consultas.length} consulta{consultas.length !== 1 ? 's' : ''} encontrada{consultas.length !== 1 ? 's' : ''}
           </Badge>
         </Col>
       </Row>
 
       <Card>
         <Card.Body className="p-0">
-          {consultasFiltradas.length === 0 ? (
+          {consultas.length === 0 ? (
             <div className="text-center py-5">
               <p className="text-muted">
-                {consultas.length === 0 
-                  ? 'No hay consultas registradas' 
-                  : 'No se encontraron consultas con los filtros aplicados'}
+                {searchTerm || filtroFecha || filtroPaciente
+                  ? 'No se encontraron consultas con los filtros aplicados'
+                  : 'Utilice los filtros superiores para buscar consultas'}
               </p>
-              {consultas.length === 0 && (
-                <Button 
-                  variant="primary" 
-                  onClick={() => navigate('/consultas/nueva')}
-                >
-                  <FaPlus className="me-2" />
-                  Registrar Primera Consulta
-                </Button>
-              )}
             </div>
           ) : (
             <div className="table-responsive">
@@ -185,7 +168,7 @@ const ConsultasList = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {consultasFiltradas.map((consulta) => {
+                  {consultas.map((consulta) => {
                     const paciente = pacientes.find(p => p.id === consulta.pacienteId);
                     return (
                       <tr key={consulta.id}>

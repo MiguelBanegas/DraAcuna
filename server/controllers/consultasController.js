@@ -10,8 +10,8 @@ export const getAllConsultas = async (req, res) => {
     `);
     res.json(result.rows);
   } catch (error) {
-    console.error('Error al obtener consultas:', error);
-    res.status(500).json({ error: 'Error al obtener consultas' });
+    console.error("Error al obtener consultas:", error);
+    res.status(500).json({ error: "Error al obtener consultas" });
   }
 };
 
@@ -78,7 +78,7 @@ export const createConsulta = async (req, res) => {
       tratamiento,
       observaciones,
       signos_vitales ? JSON.stringify(signos_vitales) : null,
-      proxima_consulta || null,  // ? Cambiar "" por null
+      proxima_consulta || null, // ? Cambiar "" por null
     ];
     const { rows } = await db.query(query, values);
     res.status(201).json(rows[0]);
@@ -110,16 +110,16 @@ export const updateConsulta = async (req, res) => {
       RETURNING *
     `;
 
-	const values = [
-  motivo,
-  diagnostico,
-  tratamiento,
-  observaciones,
-  signos_vitales ? JSON.stringify(signos_vitales) : null,
-  proxima_consulta || null,  
-  fecha_hora,
-  id,
-];    
+    const values = [
+      motivo,
+      diagnostico,
+      tratamiento,
+      observaciones,
+      signos_vitales ? JSON.stringify(signos_vitales) : null,
+      proxima_consulta || null,
+      fecha_hora,
+      id,
+    ];
 
     const { rows } = await db.query(query, values);
     if (rows.length === 0) {
@@ -146,5 +146,46 @@ export const deleteConsulta = async (req, res) => {
   } catch (error) {
     console.error("Error en deleteConsulta:", error);
     res.status(500).json({ error: "Error al eliminar la consulta" });
+  }
+};
+
+// Buscar consultas con filtros
+export const searchConsultas = async (req, res) => {
+  const { q, pacienteId, fecha } = req.query;
+  try {
+    let query = `
+      SELECT c.*, p.nombre_completo as paciente_nombre, p.dni as paciente_dni
+      FROM consultas c
+      LEFT JOIN pacientes p ON c.paciente_id = p.id
+      WHERE 1=1
+    `;
+    const values = [];
+    let paramCount = 1;
+
+    if (q) {
+      query += ` AND (c.motivo ILIKE $${paramCount} OR c.diagnostico ILIKE $${paramCount} OR p.nombre_completo ILIKE $${paramCount} OR p.dni::text ILIKE $${paramCount})`;
+      values.push(`%${q}%`);
+      paramCount++;
+    }
+
+    if (pacienteId) {
+      query += ` AND c.paciente_id = $${paramCount}`;
+      values.push(pacienteId);
+      paramCount++;
+    }
+
+    if (fecha) {
+      query += ` AND DATE(c.fecha_hora) = $${paramCount}`;
+      values.push(fecha);
+      paramCount++;
+    }
+
+    query += ` ORDER BY c.fecha_hora DESC`;
+
+    const { rows } = await db.query(query, values);
+    res.json(rows);
+  } catch (error) {
+    console.error("Error en searchConsultas:", error);
+    res.status(500).json({ error: "Error al buscar consultas" });
   }
 };

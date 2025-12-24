@@ -27,9 +27,13 @@ export const ConsultasProvider = ({ children }) => {
     }
   }, []);
 
+  // Comentado para evitar cargar todas las consultas al inicio, 
+  // cumpliendo con el nuevo criterio de buscador bajo demanda.
+  /*
   useEffect(() => {
     cargarConsultas();
   }, [cargarConsultas]);
+  */
 
   const agregarConsulta = async (consultaData) => {
     try {
@@ -63,11 +67,13 @@ export const ConsultasProvider = ({ children }) => {
     }
   };
 
-  const obtenerConsultasPorPaciente = async (pacienteId) => {
+  const buscarConsultas = async (params) => {
     try {
-      return await consultasService.getConsultasByPaciente(pacienteId);
+      const data = await consultasService.searchConsultas(params);
+      setConsultas(data);
+      return data;
     } catch (error) {
-      console.error('Error al obtener consultas por paciente:', error);
+      console.error('Error al buscar consultas:', error);
       return [];
     }
   };
@@ -79,7 +85,7 @@ export const ConsultasProvider = ({ children }) => {
     agregarConsulta,
     actualizarConsulta,
     eliminarConsulta,
-    obtenerConsultasPorPaciente
+    buscarConsultas
   };
 
   return <ConsultasContext.Provider value={value}>{children}</ConsultasContext.Provider>;

@@ -63,19 +63,14 @@ export const PacientesProvider = ({ children }) => {
     }
   };
 
-  const buscarPacientes = async (term) => {
+  const buscarPacientes = (term) => {
     if (!term.trim()) {
       return pacientes;
     }
-    try {
-      return await pacientesService.searchPacientes(term);
-    } catch (error) {
-      console.error('Error al buscar pacientes:', error);
-      return pacientes.filter(p => 
-        p.nombreCompleto.toLowerCase().includes(term.toLowerCase()) ||
-        p.dni.includes(term)
-      );
-    }
+    return pacientes.filter(p => 
+      p.nombreCompleto.toLowerCase().includes(term.toLowerCase()) ||
+      p.dni.includes(term)
+    );
   };
 
   const value = {

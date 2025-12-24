@@ -107,17 +107,3 @@ export const deletePaciente = async (id) => {
     throw error;
   }
 };
-
-export const searchPacientes = async (query) => {
-  try {
-    const response = await fetch(`${API_URL}/pacientes/search?q=${query}`, {
-      headers: getHeaders(),
-    });
-    if (!response.ok) throw new Error("Error al buscar pacientes");
-    const data = await response.json();
-    return data.map(mapPacienteFromAPI);
-  } catch (error) {
-    console.error("Error al buscar pacientes:", error);
-    throw error;
-  }
-};

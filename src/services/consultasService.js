@@ -107,3 +107,21 @@ export const deleteConsulta = async (id) => {
     throw error;
   }
 };
+
+export const searchConsultas = async (params) => {
+  const { q, pacienteId, fecha } = params;
+  let url = `${API_URL}/consultas/search?`;
+  if (q) url += `q=${encodeURIComponent(q)}&`;
+  if (pacienteId) url += `pacienteId=${pacienteId}&`;
+  if (fecha) url += `fecha=${fecha}&`;
+
+  try {
+    const response = await fetch(url, { headers: getHeaders() });
+    if (!response.ok) throw new Error("Error al buscar consultas");
+    const data = await response.json();
+    return data.map(mapConsultaFromAPI);
+  } catch (error) {
+    console.error("Error al buscar consultas:", error);
+    throw error;
+  }
+};

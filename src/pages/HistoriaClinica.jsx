@@ -1,20 +1,40 @@
-import { Container, Row, Col, Card, Button, Table, Badge } from 'react-bootstrap';
+import { useState, useEffect, useRef } from 'react';
+import { Container, Row, Col, Card, Button, Table, Badge, Form, InputGroup } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { FaFileMedical, FaPlus, FaEye } from 'react-icons/fa';
+import { FaFileMedical, FaSearch, FaEye, FaPlus } from 'react-icons/fa';
 import { useHistoriaClinica } from '../context/HistoriaClinicaContext';
 import { usePacientes } from '../context/PacientesContext';
 
 const HistoriaClinica = () => {
   const navigate = useNavigate();
   const { historiasClinicas } = useHistoriaClinica();
-  const { pacientes } = usePacientes();
+  const { pacientes, buscarPacientes } = usePacientes();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [pacientesFiltrados, setPacientesFiltrados] = useState(pacientes);
+  const searchInputRef = useRef(null);
 
-  const formatearFecha = (fecha) => {
-    return new Date(fecha).toLocaleDateString('es-AR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setPacientesFiltrados([]); // No mostrar nada si no hay búsqueda
+    } else {
+      const resultados = buscarPacientes(searchTerm);
+      setPacientesFiltrados(resultados);
+    }
+  }, [searchTerm, pacientes, buscarPacientes]);
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const getHistoriaId = (pacienteId) => {
+    const historia = historiasClinicas.find(h => h.pacienteId == pacienteId);
+    return historia ? historia.id : null;
   };
 
   return (
@@ -23,74 +43,100 @@ const HistoriaClinica = () => {
         <Col>
           <div className="d-flex justify-content-between align-items-center">
             <h2>
-              <FaFileMedical className="me-2" />
-              Historia Clínica
+              <FaFileMedical className="me-2 text-primary" />
+              Generar Historia Clínica
             </h2>
           </div>
+          <p className="text-muted">Busque un paciente para generar su resumen de atención, observaciones e imprimir.</p>
         </Col>
       </Row>
 
-      <Row className="mb-3">
-        <Col className="text-end">
-          <Badge bg="secondary" className="fs-6">
-            {historiasClinicas.length} historia{historiasClinicas.length !== 1 ? 's' : ''} clínica{historiasClinicas.length !== 1 ? 's' : ''}
-          </Badge>
+      <Row className="mb-4">
+        <Col md={8} lg={6}>
+          <InputGroup className="shadow-sm">
+            <InputGroup.Text className="bg-white border-end-0">
+              <FaSearch className="text-muted" />
+            </InputGroup.Text>
+            <Form.Control
+              ref={searchInputRef}
+              type="text"
+              placeholder="Buscar paciente por nombre o DNI..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="border-start-0 ps-0"
+            />
+          </InputGroup>
         </Col>
       </Row>
 
-      <Card>
+      <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
-          {historiasClinicas.length === 0 ? (
-            <div className="text-center py-5">
-              <p className="text-muted">
-                No hay historias clínicas registradas
-              </p>
-              <p className="text-muted">
-                Las historias clínicas se crean desde el detalle de cada paciente
-              </p>
-            </div>
-          ) : (
-            <div className="table-responsive">
-              <Table hover className="mb-0">
-                <thead className="table-light">
+          <div className="table-responsive">
+            <Table hover className="mb-0 align-middle">
+              <thead className="bg-light">
+                <tr>
+                  <th className="px-4 py-3">Paciente</th>
+                  <th className="py-3">DNI</th>
+                  <th className="py-3">Obra Social</th>
+                  <th className="py-3 text-center">Estado HC</th>
+                  <th className="px-4 py-3 text-end">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pacientesFiltrados.length === 0 ? (
                   <tr>
-                    <th>Paciente</th>
-                    <th>DNI</th>
-                    <th>Fecha Creación</th>
-                    <th>Última Actualización</th>
-                    <th className="text-center">Acciones</th>
+                    <td colSpan="5" className="text-center py-5 text-muted">
+                      {searchTerm ? 'No se encontraron pacientes que coincidan con la búsqueda' : 'No hay pacientes registrados'}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {historiasClinicas.map((historia) => {
-                    const paciente = pacientes.find(p => p.id === historia.pacienteId);
+                ) : (
+                  pacientesFiltrados.map((paciente) => {
+                    const hcId = getHistoriaId(paciente.id);
                     return (
-                      <tr key={historia.id}>
-                        <td>
-                          <strong>{paciente?.nombreCompleto || 'Paciente no encontrado'}</strong>
+                      <tr key={paciente.id}>
+                        <td className="px-4">
+                          <div className="fw-bold text-dark">{paciente.nombreCompleto}</div>
+                          <div className="small text-muted">{paciente.email || 'Sin email'}</div>
                         </td>
-                        <td>{paciente?.dni || '-'}</td>
-                        <td>{formatearFecha(historia.fechaCreacion)}</td>
-                        <td>{formatearFecha(historia.fechaUltimaActualizacion)}</td>
-                        <td>
-                          <div className="d-flex gap-2 justify-content-center">
+                        <td>{paciente.dni}</td>
+                        <td>{paciente.obraSocial || '-'}</td>
+                        <td className="text-center">
+                          {hcId ? (
+                            <Badge bg="info" pill>Existente</Badge>
+                          ) : (
+                            <Badge bg="light" text="dark" pill className="border">No creada</Badge>
+                          )}
+                        </td>
+                        <td className="px-4 text-end">
+                          {hcId ? (
                             <Button
-                              variant="outline-info"
+                              variant="primary"
                               size="sm"
-                              onClick={() => navigate(`/historia-clinica/${historia.id}`)}
-                              title="Ver detalle"
+                              className="d-inline-flex align-items-center gap-2"
+                              onClick={() => navigate(`/historia-clinica/${hcId}`)}
                             >
                               <FaEye />
+                              Ver Detalle
                             </Button>
-                          </div>
+                          ) : (
+                            <Button
+                              variant="success"
+                              size="sm"
+                              className="d-inline-flex align-items-center gap-2"
+                              onClick={() => navigate(`/historia-clinica/nueva/${paciente.id}`)}
+                            >
+                              <FaPlus />
+                              Generar Resumen
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     );
-                  })}
-                </tbody>
-              </Table>
-            </div>
-          )}
+                  })
+                )}
+              </tbody>
+            </Table>
+          </div>
         </Card.Body>
       </Card>
     </Container>

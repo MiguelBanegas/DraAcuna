@@ -13,12 +13,10 @@ const PacienteDetalle = () => {
   const { pacientes } = usePacientes();
   const { obtenerConsultasPorPaciente } = useConsultas();
   const { obtenerTurnosPorPaciente } = useTurnos();
-  const { obtenerHistoriaClinicaPorPaciente } = useHistoriaClinica();
   
   const [paciente, setPaciente] = useState(null);
   const [consultas, setConsultas] = useState([]);
   const [turnos, setTurnos] = useState([]);
-  const [historiaClinica, setHistoriaClinica] = useState(null);
 
   useEffect(() => {
     const fetchDatosPaciente = async () => {
@@ -27,15 +25,13 @@ const PacienteDetalle = () => {
         setPaciente(pacienteEncontrado);
         
         try {
-          const [consultasData, turnosData, historiaData] = await Promise.all([
+          const [consultasData, turnosData] = await Promise.all([
             obtenerConsultasPorPaciente(id),
-            obtenerTurnosPorPaciente(id),
-            obtenerHistoriaClinicaPorPaciente(id)
+            obtenerTurnosPorPaciente(id)
           ]);
           
           setConsultas(consultasData);
           setTurnos(turnosData);
-          setHistoriaClinica(historiaData);
         } catch (error) {
           console.error("Error al cargar datos adicionales del paciente:", error);
         }
@@ -46,7 +42,7 @@ const PacienteDetalle = () => {
     };
 
     fetchDatosPaciente();
-  }, [id, pacientes, navigate, obtenerConsultasPorPaciente, obtenerTurnosPorPaciente, obtenerHistoriaClinicaPorPaciente]);
+  }, [id, pacientes, navigate, obtenerConsultasPorPaciente, obtenerTurnosPorPaciente]);
 
   if (!paciente) {
     return null;
@@ -207,44 +203,7 @@ const PacienteDetalle = () => {
                     </ListGroup.Item>
                   )}
 
-          {/* Historia Clínica */}
-          <Card className="mt-3">
-            <Card.Header>
-              <h5 className="mb-0">
-                <FaFileMedical className="me-2" />
-                Historia Clínica
-              </h5>
-            </Card.Header>
-            <Card.Body>
-              {historiaClinica ? (
-                <>
-                  <p className="text-muted mb-2">
-                    <small>Última actualización: {formatearFecha(historiaClinica.fechaUltimaActualizacion)}</small>
-                  </p>
-                  <Button
-                    variant="primary"
-                    className="w-100"
-                    onClick={() => navigate(`/historia-clinica/${historiaClinica.id}`)}
-                  >
-                    Ver Historia Clínica
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <p className="text-muted mb-3">
-                    No hay historia clínica creada para este paciente.
-                  </p>
-                  <Button
-                    variant="success"
-                    className="w-100"
-                    onClick={() => navigate(`/historia-clinica/nueva/${id}`)}
-                  >
-                    Crear Historia Clínica
-                  </Button>
-                </>
-              )}
-            </Card.Body>
-          </Card>
+
                 </ListGroup>
               </Card.Body>
             </Card>

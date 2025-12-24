@@ -320,6 +320,7 @@ const ConsultaForm = () => {
                             placeholder="Sistólica"
                             min="0"
                             max="300"
+                            className="placeholder-subtle"
                           />
                           <Form.Text className="text-muted">Sistólica</Form.Text>
                         </Col>
@@ -332,6 +333,7 @@ const ConsultaForm = () => {
                             placeholder="Diastólica"
                             min="0"
                             max="200"
+                            className="placeholder-subtle"
                           />
                           <Form.Text className="text-muted">Diastólica</Form.Text>
                         </Col>
@@ -350,6 +352,7 @@ const ConsultaForm = () => {
                         placeholder="72"
                         min="0"
                         max="300"
+                        className="placeholder-subtle"
                       />
                     </Form.Group>
                   </Col>
@@ -366,6 +369,7 @@ const ConsultaForm = () => {
                         placeholder="36.5"
                         min="30"
                         max="45"
+                        className="placeholder-subtle"
                       />
                     </Form.Group>
                   </Col>
@@ -383,6 +387,7 @@ const ConsultaForm = () => {
                         placeholder="16"
                         min="0"
                         max="100"
+                        className="placeholder-subtle"
                       />
                     </Form.Group>
                   </Col>
@@ -398,6 +403,7 @@ const ConsultaForm = () => {
                         placeholder="98"
                         min="0"
                         max="100"
+                        className="placeholder-subtle"
                       />
                     </Form.Group>
                   </Col>
@@ -414,6 +420,7 @@ const ConsultaForm = () => {
                         placeholder="70"
                         min="0"
                         max="500"
+                        className="placeholder-subtle"
                       />
                     </Form.Group>
                   </Col>
@@ -429,6 +436,7 @@ const ConsultaForm = () => {
                         placeholder="170"
                         min="0"
                         max="250"
+                        className="placeholder-subtle"
                       />
                     </Form.Group>
                   </Col>
