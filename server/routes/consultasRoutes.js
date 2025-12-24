@@ -3,6 +3,8 @@ import * as consultasController from "../controllers/consultasController.js";
 
 const router = express.Router();
 
+router.get("/", consultasController.getAllConsultas); 
+
 router.get("/paciente/:pacienteId", consultasController.getConsultasByPaciente);
 router.get("/:id", consultasController.getConsultaById);
 router.post("/", consultasController.createConsulta);

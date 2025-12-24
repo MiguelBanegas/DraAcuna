@@ -3,10 +3,9 @@ import * as historiaClinicaController from "../controllers/historiaClinicaContro
 
 const router = express.Router();
 
-router.get(
-  "/paciente/:pacienteId",
-  historiaClinicaController.getHistoriaClinicaByPaciente
-);
+router.get("/", historiaClinicaController.getAllHistoriasClinicas);
+
+router.get("/paciente/:pacienteId", historiaClinicaController.getHistoriaClinicaByPaciente);
 router.post("/", historiaClinicaController.createHistoriaClinica);
 router.put("/:id", historiaClinicaController.updateHistoriaClinica);
 

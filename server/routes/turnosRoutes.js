@@ -7,5 +7,6 @@ router.get("/", turnosController.getAllTurnos);
 router.post("/", turnosController.createTurno);
 router.patch("/:id/estado", turnosController.updateEstadoTurno);
 router.delete("/:id", turnosController.deleteTurno);
+router.put("/:id", turnosController.updateTurno);
 
 export default router;

@@ -24,19 +24,23 @@ export const getAllTurnos = async (req, res) => {
 
 // Crear un nuevo turno
 export const createTurno = async (req, res) => {
-  const { paciente_id, fecha_hora, duracion, motivo } = req.body;
+  const { paciente_id, fecha_hora, duracion, motivo, observaciones, estado } = req.body;
   try {
     const query = `
-      INSERT INTO turnos (paciente_id, fecha_hora, duracion, motivo)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO turnos (paciente_id, fecha_hora, duracion, motivo, observaciones, estado)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `;
-    const { rows } = await db.query(query, [
+    const values = [
       paciente_id,
       fecha_hora,
-      duracion || 30,
-      motivo,
-    ]);
+      duracion ? parseInt(duracion) : 30,  // Convertir a número
+      motivo || null,
+      observaciones || null,  // Convertir "" a null
+      estado || 'pendiente'
+    ];
+    
+    const { rows } = await db.query(query, values);
     res.status(201).json(rows[0]);
   } catch (error) {
     console.error("Error en createTurno:", error);
@@ -77,5 +81,58 @@ export const deleteTurno = async (req, res) => {
   } catch (error) {
     console.error("Error en deleteTurno:", error);
     res.status(500).json({ error: "Error al eliminar el turno" });
+  }
+};
+
+// Obtener turnos por paciente
+export const getTurnosByPaciente = async (req, res) => {
+  const { pacienteId } = req.params;
+  try {
+    const { rows } = await db.query(
+      "SELECT * FROM turnos WHERE paciente_id = $1 ORDER BY fecha_hora DESC",
+      [pacienteId]
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Error en getTurnosByPaciente:", error);
+    res.status(500).json({ error: "Error al obtener los turnos del paciente" });
+  }
+};
+
+// Actualizar un turno completo
+export const updateTurno = async (req, res) => {
+  const { id } = req.params;
+  const { paciente_id, fecha_hora, duracion, estado, motivo, observaciones } = req.body;
+  
+  try {
+    const query = `
+      UPDATE turnos SET 
+        paciente_id = $1, 
+        fecha_hora = $2, 
+        duracion = $3, 
+        estado = $4, 
+        motivo = $5,
+	observaciones = $6
+      WHERE id = $7
+      RETURNING *
+    `;
+    const values = [
+      paciente_id,
+      fecha_hora,
+      duracion || 30,
+      estado || 'pendiente',
+      motivo,
+	observaciones,
+      id
+    ];
+
+    const { rows } = await db.query(query, values);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Turno no encontrado" });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error("Error en updateTurno:", error);
+    res.status(500).json({ error: "Error al actualizar el turno completo" });
   }
 };

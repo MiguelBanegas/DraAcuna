@@ -1,5 +1,20 @@
 import * as db from "../db/index.js";
 
+export const getAllHistoriasClinicas = async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT h.*, p.nombre_completo as paciente_nombre
+      FROM historias_clinicas h
+      LEFT JOIN pacientes p ON h.paciente_id = p.id
+      ORDER BY h.fecha_ultima_actualizacion DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener historias clínicas:', error);
+    res.status(500).json({ error: 'Error al obtener historias clínicas' });
+  }
+};
+
 // Obtener metadatos de historia clÃ­nica por paciente
 export const getHistoriaClinicaByPaciente = async (req, res) => {
   const { pacienteId } = req.params;

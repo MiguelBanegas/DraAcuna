@@ -1,5 +1,20 @@
 import * as db from "../db/index.js";
 
+export const getAllConsultas = async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT c.*, p.nombre_completo as paciente_nombre
+      FROM consultas c
+      LEFT JOIN pacientes p ON c.paciente_id = p.id
+      ORDER BY c.fecha_hora DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener consultas:', error);
+    res.status(500).json({ error: 'Error al obtener consultas' });
+  }
+};
+
 // Obtener todas las consultas de un paciente
 export const getConsultasByPaciente = async (req, res) => {
   const { pacienteId } = req.params;
@@ -35,6 +50,7 @@ export const getConsultaById = async (req, res) => {
 };
 
 // Crear una nueva consulta
+
 export const createConsulta = async (req, res) => {
   const {
     paciente_id,
@@ -46,7 +62,6 @@ export const createConsulta = async (req, res) => {
     signos_vitales,
     proxima_consulta,
   } = req.body;
-
   try {
     const query = `
       INSERT INTO consultas (
@@ -62,10 +77,9 @@ export const createConsulta = async (req, res) => {
       diagnostico,
       tratamiento,
       observaciones,
-      JSON.stringify(signos_vitales),
-      proxima_consulta,
+      signos_vitales ? JSON.stringify(signos_vitales) : null,
+      proxima_consulta || null,  // ? Cambiar "" por null
     ];
-
     const { rows } = await db.query(query, values);
     res.status(201).json(rows[0]);
   } catch (error) {
@@ -95,16 +109,17 @@ export const updateConsulta = async (req, res) => {
       WHERE id = $8 
       RETURNING *
     `;
-    const values = [
-      motivo,
-      diagnostico,
-      tratamiento,
-      observaciones,
-      JSON.stringify(signos_vitales),
-      proxima_consulta,
-      fecha_hora,
-      id,
-    ];
+
+	const values = [
+  motivo,
+  diagnostico,
+  tratamiento,
+  observaciones,
+  signos_vitales ? JSON.stringify(signos_vitales) : null,
+  proxima_consulta || null,  
+  fecha_hora,
+  id,
+];    
 
     const { rows } = await db.query(query, values);
     if (rows.length === 0) {
