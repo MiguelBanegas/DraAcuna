@@ -41,9 +41,17 @@ const TurnoForm = () => {
       const turno = turnos.find(t => t.id == id);
       if (turno) {
         setIsEditing(true);
+        // Convertir fecha UTC a local para el input datetime-local
+        const formatearFechaLocal = (fechaUTC) => {
+          const fecha = new Date(fechaUTC);
+          const offset = fecha.getTimezoneOffset() * 60000;
+          const fechaLocal = new Date(fecha.getTime() - offset);
+          return fechaLocal.toISOString().slice(0, 16);
+        };
+        
         setFormData({
           pacienteId: turno.pacienteId || '',
-          fechaHora: turno.fechaHora ? new Date(turno.fechaHora).toISOString().slice(0, 16) : '',
+          fechaHora: turno.fechaHora ? formatearFechaLocal(turno.fechaHora) : '',
           duracion: turno.duracion?.toString() || '30',
           estado: turno.estado || 'pendiente',
           motivo: turno.motivo || '',

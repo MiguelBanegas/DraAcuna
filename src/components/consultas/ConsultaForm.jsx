@@ -54,9 +54,17 @@ const ConsultaForm = () => {
       const consulta = consultas.find(c => c.id == id);
       if (consulta) {
         setIsEditing(true);
+        // Convertir fecha UTC a local para el input datetime-local
+        const formatearFechaLocal = (fechaUTC) => {
+          const fecha = new Date(fechaUTC);
+          const offset = fecha.getTimezoneOffset() * 60000;
+          const fechaLocal = new Date(fecha.getTime() - offset);
+          return fechaLocal.toISOString().slice(0, 16);
+        };
+        
         setFormData({
           pacienteId: consulta.pacienteId || '',
-          fechaHora: consulta.fechaHora ? new Date(consulta.fechaHora).toISOString().slice(0, 16) : '',
+          fechaHora: consulta.fechaHora ? formatearFechaLocal(consulta.fechaHora) : '',
           motivo: consulta.motivo || '',
           diagnostico: consulta.diagnostico || '',
           tratamiento: consulta.tratamiento || '',
