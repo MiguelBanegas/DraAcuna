@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import API_URL from '../utils/apiConfig';
 
 const AuthContext = createContext();
 
@@ -12,48 +13,62 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(true);
-
-  // Credenciales hardcodeadas
-  const VALID_CREDENTIALS = {
-    username: 'acuna',
-    password: 'acuna'
-  };
 
   // Verificar si hay sesión guardada al cargar
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
-    if (savedUser) {
+    const savedToken = localStorage.getItem('token');
+    
+    if (savedUser && savedToken) {
       setUser(JSON.parse(savedUser));
+      setToken(savedToken);
     }
     setLoading(false);
   }, []);
 
-  const login = (username, password) => {
-    if (username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password) {
-      const userData = {
-        username: username,
-        name: 'Dra. Acuña',
-        loginTime: new Date().toISOString()
-      };
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      return { success: true };
+  const login = async (username, password) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUser(data.user);
+        setToken(data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('token', data.token);
+        return { success: true };
+      } else {
+        return { success: false, error: data.error || 'Usuario o contraseña incorrectos' };
+      }
+    } catch (error) {
+      console.error('Error en login:', error);
+      return { success: false, error: 'No se pudo conectar con el servidor' };
     }
-    return { success: false, error: 'Usuario o contraseña incorrectos' };
   };
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
 
   const isAuthenticated = () => {
-    return user !== null;
+    return user !== null && token !== null;
   };
 
   const value = {
     user,
+    token,
     login,
     logout,
     isAuthenticated,

@@ -51,7 +51,7 @@ const ConsultaForm = () => {
   // Cargar datos si es edición
   useEffect(() => {
     if (id) {
-      const consulta = consultas.find(c => c.id === id);
+      const consulta = consultas.find(c => c.id == id);
       if (consulta) {
         setIsEditing(true);
         setFormData({

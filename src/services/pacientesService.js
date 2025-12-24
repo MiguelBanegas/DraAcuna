@@ -1,77 +1,106 @@
-// Servicio para gestionar pacientes usando localStorage
+import API_URL from "../utils/apiConfig";
 
-const STORAGE_KEY = "pacientes";
-
-// Generar ID único
-const generateId = () => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+const getHeaders = () => {
+  const token = localStorage.getItem("token");
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
 };
 
-// Obtener todos los pacientes
-export const getAllPacientes = () => {
+const mapPacienteFromAPI = (p) => ({
+  id: p.id,
+  nombreCompleto: p.nombre_completo,
+  dni: p.dni,
+  fechaNacimiento: p.fecha_nacimiento,
+  genero: p.genero,
+  telefono: p.telefono,
+  email: p.email,
+  direccion: p.direccion,
+  obraSocial: p.obra_social,
+  numeroAfiliado: p.numero_afiliado,
+  fechaCreacion: p.fecha_creacion,
+});
+
+const mapPacienteToAPI = (p) => ({
+  nombre_completo: p.nombreCompleto,
+  dni: p.dni,
+  fecha_nacimiento: p.fechaNacimiento,
+  genero: p.genero,
+  telefono: p.telefono,
+  email: p.email,
+  direccion: p.direccion,
+  obra_social: p.obraSocial,
+  numero_afiliado: p.numeroAfiliado,
+});
+
+export const getAllPacientes = async () => {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    const response = await fetch(`${API_URL}/pacientes`, {
+      headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error("Error al cargar pacientes");
+    const data = await response.json();
+    return data.map(mapPacienteFromAPI);
   } catch (error) {
     console.error("Error al obtener pacientes:", error);
-    return [];
+    throw error;
   }
 };
 
-// Obtener paciente por ID
-export const getPacienteById = (id) => {
-  const pacientes = getAllPacientes();
-  return pacientes.find((p) => p.id === id);
+export const getPacienteById = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/pacientes/${id}`, {
+      headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error("Paciente no encontrado");
+    const data = await response.json();
+    return mapPacienteFromAPI(data);
+  } catch (error) {
+    console.error("Error al obtener paciente:", error);
+    throw error;
+  }
 };
 
-// Crear nuevo paciente
-export const createPaciente = (pacienteData) => {
+export const createPaciente = async (paciente) => {
   try {
-    const pacientes = getAllPacientes();
-    const nuevoPaciente = {
-      id: generateId(),
-      ...pacienteData,
-      fechaRegistro: new Date().toISOString(),
-    };
-    pacientes.push(nuevoPaciente);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(pacientes));
-    return nuevoPaciente;
+    const response = await fetch(`${API_URL}/pacientes`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(mapPacienteToAPI(paciente)),
+    });
+    if (!response.ok) throw new Error("Error al crear paciente");
+    const data = await response.json();
+    return mapPacienteFromAPI(data);
   } catch (error) {
     console.error("Error al crear paciente:", error);
     throw error;
   }
 };
 
-// Actualizar paciente
-export const updatePaciente = (id, pacienteData) => {
+export const updatePaciente = async (id, paciente) => {
   try {
-    const pacientes = getAllPacientes();
-    const index = pacientes.findIndex((p) => p.id === id);
-
-    if (index === -1) {
-      throw new Error("Paciente no encontrado");
-    }
-
-    pacientes[index] = {
-      ...pacientes[index],
-      ...pacienteData,
-      id, // Mantener el ID original
-    };
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(pacientes));
-    return pacientes[index];
+    const response = await fetch(`${API_URL}/pacientes/${id}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(mapPacienteToAPI(paciente)),
+    });
+    if (!response.ok) throw new Error("Error al actualizar paciente");
+    const data = await response.json();
+    return mapPacienteFromAPI(data);
   } catch (error) {
     console.error("Error al actualizar paciente:", error);
     throw error;
   }
 };
 
-// Eliminar paciente
-export const deletePaciente = (id) => {
+export const deletePaciente = async (id) => {
   try {
-    const pacientes = getAllPacientes();
-    const filteredPacientes = pacientes.filter((p) => p.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredPacientes));
+    const response = await fetch(`${API_URL}/pacientes/${id}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error("Error al eliminar paciente");
     return true;
   } catch (error) {
     console.error("Error al eliminar paciente:", error);
@@ -79,14 +108,16 @@ export const deletePaciente = (id) => {
   }
 };
 
-// Buscar pacientes por nombre o DNI
-export const searchPacientes = (query) => {
-  const pacientes = getAllPacientes();
-  const searchTerm = query.toLowerCase();
-
-  return pacientes.filter(
-    (p) =>
-      p.nombreCompleto?.toLowerCase().includes(searchTerm) ||
-      p.dni?.toLowerCase().includes(searchTerm)
-  );
+export const searchPacientes = async (query) => {
+  try {
+    const response = await fetch(`${API_URL}/pacientes/search?q=${query}`, {
+      headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error("Error al buscar pacientes");
+    const data = await response.json();
+    return data.map(mapPacienteFromAPI);
+  } catch (error) {
+    console.error("Error al buscar pacientes:", error);
+    throw error;
+  }
 };

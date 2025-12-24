@@ -1,98 +1,83 @@
-// Servicio para gestionar historias clínicas usando localStorage
+import API_URL from "../utils/apiConfig";
 
-const STORAGE_KEY = "historias_clinicas";
-
-// Generar ID único
-const generateId = () => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+const getHeaders = () => {
+  const token = localStorage.getItem("token");
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
 };
 
-// Obtener todas las historias clínicas
-export const getAllHistoriasClinicas = () => {
+const mapHistoriaFromAPI = (h) => ({
+  id: h.id,
+  pacienteId: h.paciente_id,
+  observacionesMedico: h.observaciones_medico,
+  fechaGeneracion: h.fecha_generacion,
+  fechaUltimaActualizacion: h.fecha_ultima_actualizacion,
+});
+
+const mapHistoriaToAPI = (h) => ({
+  paciente_id: h.pacienteId,
+  observaciones_medico: h.observacionesMedico,
+});
+
+export const getAllHistoriasClinicas = async () => {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    const response = await fetch(`${API_URL}/historia-clinica`, {
+      headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error("Error al cargar historias clínicas");
+    const data = await response.json();
+    return data.map(mapHistoriaFromAPI);
   } catch (error) {
     console.error("Error al obtener historias clínicas:", error);
-    return [];
+    throw error;
   }
 };
 
-// Obtener historia clínica por ID
-export const getHistoriaClinicaById = (id) => {
-  const historias = getAllHistoriasClinicas();
-  return historias.find((h) => h.id === id);
-};
-
-// Obtener historia clínica de un paciente
-export const getHistoriaClinicaByPaciente = (pacienteId) => {
-  const historias = getAllHistoriasClinicas();
-  return historias.find((h) => h.pacienteId === pacienteId);
-};
-
-// Crear nueva historia clínica
-export const createHistoriaClinica = (historiaData) => {
+export const getHistoriaClinicaByPaciente = async (pacienteId) => {
   try {
-    const historias = getAllHistoriasClinicas();
-
-    // Verificar si ya existe una historia para este paciente
-    const existente = historias.find(
-      (h) => h.pacienteId === historiaData.pacienteId
+    const response = await fetch(
+      `${API_URL}/historia-clinica/paciente/${pacienteId}`,
+      { headers: getHeaders() }
     );
-    if (existente) {
-      throw new Error("Ya existe una historia clínica para este paciente");
-    }
+    if (!response.ok) return null;
+    const data = await response.json();
+    return mapHistoriaFromAPI(data);
+  } catch (error) {
+    console.error("Error al obtener historia clínica:", error);
+    return null;
+  }
+};
 
-    const nuevaHistoria = {
-      id: generateId(),
-      ...historiaData,
-      fechaCreacion: new Date().toISOString(),
-      fechaUltimaActualizacion: new Date().toISOString(),
-    };
-
-    historias.push(nuevaHistoria);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(historias));
-    return nuevaHistoria;
+export const createHistoriaClinica = async (historia) => {
+  try {
+    const response = await fetch(`${API_URL}/historia-clinica`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(mapHistoriaToAPI(historia)),
+    });
+    if (!response.ok) throw new Error("Error al crear historia clínica");
+    const data = await response.json();
+    return mapHistoriaFromAPI(data);
   } catch (error) {
     console.error("Error al crear historia clínica:", error);
     throw error;
   }
 };
 
-// Actualizar historia clínica
-export const updateHistoriaClinica = (id, historiaData) => {
+export const updateHistoriaClinica = async (id, historia) => {
   try {
-    const historias = getAllHistoriasClinicas();
-    const index = historias.findIndex((h) => h.id === id);
-
-    if (index === -1) {
-      throw new Error("Historia clínica no encontrada");
-    }
-
-    historias[index] = {
-      ...historias[index],
-      ...historiaData,
-      id, // Mantener el ID original
-      fechaUltimaActualizacion: new Date().toISOString(),
-    };
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(historias));
-    return historias[index];
+    const response = await fetch(`${API_URL}/historia-clinica/${id}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(mapHistoriaToAPI(historia)),
+    });
+    if (!response.ok) throw new Error("Error al actualizar historia clínica");
+    const data = await response.json();
+    return mapHistoriaFromAPI(data);
   } catch (error) {
     console.error("Error al actualizar historia clínica:", error);
-    throw error;
-  }
-};
-
-// Eliminar historia clínica
-export const deleteHistoriaClinica = (id) => {
-  try {
-    const historias = getAllHistoriasClinicas();
-    const filteredHistorias = historias.filter((h) => h.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredHistorias));
-    return true;
-  } catch (error) {
-    console.error("Error al eliminar historia clínica:", error);
     throw error;
   }
 };

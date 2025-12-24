@@ -26,19 +26,22 @@ const HistoriaClinicaDetalle = () => {
   };
 
   useEffect(() => {
-    const historiaEncontrada = historiasClinicas.find(h => h.id === id);
-    if (historiaEncontrada) {
-      setHistoria(historiaEncontrada);
-      setObservaciones(historiaEncontrada.observacionesMedico || '');
-      const pacienteEncontrado = pacientes.find(p => p.id === historiaEncontrada.pacienteId);
-      setPaciente(pacienteEncontrado);
-      
-      // Obtener consultas del paciente
-      const consultasPaciente = obtenerConsultasPorPaciente(historiaEncontrada.pacienteId);
-      setConsultas(consultasPaciente);
-    } else {
-      navigate('/historia-clinica');
-    }
+    const fetchHistoria = async () => {
+      const historiaEncontrada = historiasClinicas.find(h => h.id == id);
+      if (historiaEncontrada) {
+        setHistoria(historiaEncontrada);
+        setObservaciones(historiaEncontrada.observacionesMedico || '');
+        const pacienteEncontrado = pacientes.find(p => p.id == historiaEncontrada.pacienteId);
+        setPaciente(pacienteEncontrado);
+        
+        // Obtener consultas del paciente
+        const consultasPaciente = await obtenerConsultasPorPaciente(historiaEncontrada.pacienteId);
+        setConsultas(consultasPaciente);
+      } else if (historiasClinicas.length > 0) {
+        navigate('/historia-clinica');
+      }
+    };
+    fetchHistoria();
   }, [id, historiasClinicas, pacientes, obtenerConsultasPorPaciente, navigate]);
 
   if (!historia || !paciente) {

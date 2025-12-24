@@ -21,15 +21,31 @@ const PacienteDetalle = () => {
   const [historiaClinica, setHistoriaClinica] = useState(null);
 
   useEffect(() => {
-    const pacienteEncontrado = pacientes.find(p => p.id === id);
-    if (pacienteEncontrado) {
-      setPaciente(pacienteEncontrado);
-      setConsultas(obtenerConsultasPorPaciente(id));
-      setTurnos(obtenerTurnosPorPaciente(id));
-      setHistoriaClinica(obtenerHistoriaClinicaPorPaciente(id));
-    } else {
-      navigate('/pacientes');
-    }
+    const fetchDatosPaciente = async () => {
+      const pacienteEncontrado = pacientes.find(p => p.id == id);
+      if (pacienteEncontrado) {
+        setPaciente(pacienteEncontrado);
+        
+        try {
+          const [consultasData, turnosData, historiaData] = await Promise.all([
+            obtenerConsultasPorPaciente(id),
+            obtenerTurnosPorPaciente(id),
+            obtenerHistoriaClinicaPorPaciente(id)
+          ]);
+          
+          setConsultas(consultasData);
+          setTurnos(turnosData);
+          setHistoriaClinica(historiaData);
+        } catch (error) {
+          console.error("Error al cargar datos adicionales del paciente:", error);
+        }
+      } else if (pacientes.length > 0) {
+        // Solo redirigir si ya intentó cargar pacientes y no lo encontró
+        navigate('/pacientes');
+      }
+    };
+
+    fetchDatosPaciente();
   }, [id, pacientes, navigate, obtenerConsultasPorPaciente, obtenerTurnosPorPaciente, obtenerHistoriaClinicaPorPaciente]);
 
   if (!paciente) {

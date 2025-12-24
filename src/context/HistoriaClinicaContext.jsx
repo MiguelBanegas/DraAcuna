@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as historiaClinicaService from '../services/historiaClinicaService';
 
 const HistoriaClinicaContext = createContext();
@@ -6,35 +6,43 @@ const HistoriaClinicaContext = createContext();
 export const useHistoriaClinica = () => {
   const context = useContext(HistoriaClinicaContext);
   if (!context) {
-    throw new Error('useHistoriaClinica debe usarse dentro de HistoriaClinicaProvider');
+    throw new Error('useHistoriaClinica debe ser usado dentro de un HistoriaClinicaProvider');
   }
   return context;
 };
 
 export const HistoriaClinicaProvider = ({ children }) => {
   const [historiasClinicas, setHistoriasClinicas] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Cargar historias clínicas al iniciar
-  useEffect(() => {
-    cargarHistoriasClinicas();
-  }, []);
-
-  const cargarHistoriasClinicas = () => {
+  const cargarHistorias = useCallback(async () => {
     setLoading(true);
     try {
-      const data = historiaClinicaService.getAllHistoriasClinicas();
+      const data = await historiaClinicaService.getAllHistoriasClinicas();
       setHistoriasClinicas(data);
     } catch (error) {
       console.error('Error al cargar historias clínicas:', error);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    cargarHistorias();
+  }, [cargarHistorias]);
+
+  const obtenerHistoriaClinicaPorPaciente = async (pacienteId) => {
+    try {
+      return await historiaClinicaService.getHistoriaClinicaByPaciente(pacienteId);
+    } catch (error) {
+      console.error('Error al obtener historia clínica por paciente:', error);
+      return null;
+    }
   };
 
   const agregarHistoriaClinica = async (historiaData) => {
     try {
-      const nuevaHistoria = historiaClinicaService.createHistoriaClinica(historiaData);
+      const nuevaHistoria = await historiaClinicaService.createHistoriaClinica(historiaData);
       setHistoriasClinicas(prev => [...prev, nuevaHistoria]);
       return nuevaHistoria;
     } catch (error) {
@@ -45,8 +53,8 @@ export const HistoriaClinicaProvider = ({ children }) => {
 
   const actualizarHistoriaClinica = async (id, historiaData) => {
     try {
-      const historiaActualizada = historiaClinicaService.updateHistoriaClinica(id, historiaData);
-      setHistoriasClinicas(prev => prev.map(h => h.id === id ? historiaActualizada : h));
+      const historiaActualizada = await historiaClinicaService.updateHistoriaClinica(id, historiaData);
+      setHistoriasClinicas(prev => prev.map(h => h.id == id ? historiaActualizada : h));
       return historiaActualizada;
     } catch (error) {
       console.error('Error al actualizar historia clínica:', error);
@@ -54,33 +62,14 @@ export const HistoriaClinicaProvider = ({ children }) => {
     }
   };
 
-  const eliminarHistoriaClinica = async (id) => {
-    try {
-      await historiaClinicaService.deleteHistoriaClinica(id);
-      setHistoriasClinicas(prev => prev.filter(h => h.id !== id));
-    } catch (error) {
-      console.error('Error al eliminar historia clínica:', error);
-      throw error;
-    }
-  };
-
-  const obtenerHistoriaClinicaPorPaciente = (pacienteId) => {
-    return historiaClinicaService.getHistoriaClinicaByPaciente(pacienteId);
-  };
-
   const value = {
     historiasClinicas,
     loading,
-    cargarHistoriasClinicas,
+    cargarHistorias,
+    obtenerHistoriaClinicaPorPaciente,
     agregarHistoriaClinica,
-    actualizarHistoriaClinica,
-    eliminarHistoriaClinica,
-    obtenerHistoriaClinicaPorPaciente
+    actualizarHistoriaClinica
   };
 
-  return (
-    <HistoriaClinicaContext.Provider value={value}>
-      {children}
-    </HistoriaClinicaContext.Provider>
-  );
+  return <HistoriaClinicaContext.Provider value={value}>{children}</HistoriaClinicaContext.Provider>;
 };

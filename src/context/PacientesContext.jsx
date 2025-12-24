@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as pacientesService from '../services/pacientesService';
 
 const PacientesContext = createContext();
@@ -6,36 +6,34 @@ const PacientesContext = createContext();
 export const usePacientes = () => {
   const context = useContext(PacientesContext);
   if (!context) {
-    throw new Error('usePacientes debe usarse dentro de PacientesProvider');
+    throw new Error('usePacientes debe ser usado dentro de un PacientesProvider');
   }
   return context;
 };
 
 export const PacientesProvider = ({ children }) => {
   const [pacientes, setPacientes] = useState([]);
-  const [pacienteSeleccionado, setPacienteSeleccionado] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Cargar pacientes al iniciar
-  useEffect(() => {
-    cargarPacientes();
-  }, []);
-
-  const cargarPacientes = () => {
+  const cargarPacientes = useCallback(async () => {
     setLoading(true);
     try {
-      const data = pacientesService.getAllPacientes();
+      const data = await pacientesService.getAllPacientes();
       setPacientes(data);
     } catch (error) {
       console.error('Error al cargar pacientes:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    cargarPacientes();
+  }, [cargarPacientes]);
 
   const agregarPaciente = async (pacienteData) => {
     try {
-      const nuevoPaciente = pacientesService.createPaciente(pacienteData);
+      const nuevoPaciente = await pacientesService.createPaciente(pacienteData);
       setPacientes(prev => [...prev, nuevoPaciente]);
       return nuevoPaciente;
     } catch (error) {
@@ -46,8 +44,8 @@ export const PacientesProvider = ({ children }) => {
 
   const actualizarPaciente = async (id, pacienteData) => {
     try {
-      const pacienteActualizado = pacientesService.updatePaciente(id, pacienteData);
-      setPacientes(prev => prev.map(p => p.id === id ? pacienteActualizado : p));
+      const pacienteActualizado = await pacientesService.updatePaciente(id, pacienteData);
+      setPacientes(prev => prev.map(p => p.id == id ? pacienteActualizado : p));
       return pacienteActualizado;
     } catch (error) {
       console.error('Error al actualizar paciente:', error);
@@ -58,39 +56,37 @@ export const PacientesProvider = ({ children }) => {
   const eliminarPaciente = async (id) => {
     try {
       await pacientesService.deletePaciente(id);
-      setPacientes(prev => prev.filter(p => p.id !== id));
-      if (pacienteSeleccionado?.id === id) {
-        setPacienteSeleccionado(null);
-      }
+      setPacientes(prev => prev.filter(p => p.id != id));
     } catch (error) {
       console.error('Error al eliminar paciente:', error);
       throw error;
     }
   };
 
-  const buscarPacientes = (query) => {
-    return pacientesService.searchPacientes(query);
-  };
-
-  const seleccionarPaciente = (paciente) => {
-    setPacienteSeleccionado(paciente);
+  const buscarPacientes = async (term) => {
+    if (!term.trim()) {
+      return pacientes;
+    }
+    try {
+      return await pacientesService.searchPacientes(term);
+    } catch (error) {
+      console.error('Error al buscar pacientes:', error);
+      return pacientes.filter(p => 
+        p.nombreCompleto.toLowerCase().includes(term.toLowerCase()) ||
+        p.dni.includes(term)
+      );
+    }
   };
 
   const value = {
     pacientes,
-    pacienteSeleccionado,
     loading,
     cargarPacientes,
     agregarPaciente,
     actualizarPaciente,
     eliminarPaciente,
-    buscarPacientes,
-    seleccionarPaciente
+    buscarPacientes
   };
 
-  return (
-    <PacientesContext.Provider value={value}>
-      {children}
-    </PacientesContext.Provider>
-  );
+  return <PacientesContext.Provider value={value}>{children}</PacientesContext.Provider>;
 };

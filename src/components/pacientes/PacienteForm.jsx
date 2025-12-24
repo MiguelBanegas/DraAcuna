@@ -29,7 +29,7 @@ const PacienteForm = () => {
   // Cargar datos si es edición
   useEffect(() => {
     if (id) {
-      const paciente = pacientes.find(p => p.id === id);
+      const paciente = pacientes.find(p => p.id == id);
       if (paciente) {
         setIsEditing(true);
         setFormData({

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as turnosService from '../services/turnosService';
 
 const TurnosContext = createContext();
@@ -6,38 +6,34 @@ const TurnosContext = createContext();
 export const useTurnos = () => {
   const context = useContext(TurnosContext);
   if (!context) {
-    throw new Error('useTurnos debe usarse dentro de TurnosProvider');
+    throw new Error('useTurnos debe ser usado dentro de un TurnosProvider');
   }
   return context;
 };
 
 export const TurnosProvider = ({ children }) => {
   const [turnos, setTurnos] = useState([]);
-  const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
-  const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
-  const [vistaCalendario, setVistaCalendario] = useState('mes'); // 'dia', 'semana', 'mes'
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Cargar turnos al iniciar
-  useEffect(() => {
-    cargarTurnos();
-  }, []);
-
-  const cargarTurnos = () => {
+  const cargarTurnos = useCallback(async (fechaInicio, fechaFin) => {
     setLoading(true);
     try {
-      const data = turnosService.getAllTurnos();
+      const data = await turnosService.getAllTurnos(fechaInicio, fechaFin);
       setTurnos(data);
     } catch (error) {
       console.error('Error al cargar turnos:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    cargarTurnos();
+  }, [cargarTurnos]);
 
   const agregarTurno = async (turnoData) => {
     try {
-      const nuevoTurno = turnosService.createTurno(turnoData);
+      const nuevoTurno = await turnosService.createTurno(turnoData);
       setTurnos(prev => [...prev, nuevoTurno]);
       return nuevoTurno;
     } catch (error) {
@@ -48,8 +44,8 @@ export const TurnosProvider = ({ children }) => {
 
   const actualizarTurno = async (id, turnoData) => {
     try {
-      const turnoActualizado = turnosService.updateTurno(id, turnoData);
-      setTurnos(prev => prev.map(t => t.id === id ? turnoActualizado : t));
+      const turnoActualizado = await turnosService.updateTurno(id, turnoData);
+      setTurnos(prev => prev.map(t => t.id == id ? turnoActualizado : t));
       return turnoActualizado;
     } catch (error) {
       console.error('Error al actualizar turno:', error);
@@ -57,81 +53,54 @@ export const TurnosProvider = ({ children }) => {
     }
   };
 
-  const cambiarEstadoTurno = async (id, estado) => {
-    try {
-      const turnoActualizado = turnosService.updateEstadoTurno(id, estado);
-      setTurnos(prev => prev.map(t => t.id === id ? turnoActualizado : t));
-      return turnoActualizado;
-    } catch (error) {
-      console.error('Error al cambiar estado del turno:', error);
-      throw error;
-    }
-  };
-
   const eliminarTurno = async (id) => {
     try {
       await turnosService.deleteTurno(id);
-      setTurnos(prev => prev.filter(t => t.id !== id));
-      if (turnoSeleccionado?.id === id) {
-        setTurnoSeleccionado(null);
-      }
+      setTurnos(prev => prev.filter(t => t.id != id));
     } catch (error) {
       console.error('Error al eliminar turno:', error);
       throw error;
     }
   };
 
-  const obtenerTurnosPorPaciente = (pacienteId) => {
-    return turnosService.getTurnosByPaciente(pacienteId);
+  const obtenerTurnosPorPaciente = async (pacienteId) => {
+    try {
+      return await turnosService.getTurnosByPaciente(pacienteId);
+    } catch (error) {
+      console.error('Error al obtener turnos por paciente:', error);
+      return [];
+    }
   };
 
   const obtenerTurnosPorFecha = (fecha) => {
-    return turnosService.getTurnosByFecha(fecha);
-  };
-
-  const obtenerTurnosPorRango = (fechaInicio, fechaFin) => {
-    return turnosService.getTurnosByRangoFechas(fechaInicio, fechaFin);
+    const fechaBuscada = new Date(fecha);
+    fechaBuscada.setHours(0, 0, 0, 0);
+    
+    return turnos.filter(turno => {
+      const fechaTurno = new Date(turno.fechaHora);
+      fechaTurno.setHours(0, 0, 0, 0);
+      return fechaTurno.getTime() === fechaBuscada.getTime();
+    });
   };
 
   const obtenerTurnosProximos = () => {
-    return turnosService.getTurnosProximos();
-  };
-
-  const seleccionarTurno = (turno) => {
-    setTurnoSeleccionado(turno);
-  };
-
-  const cambiarFechaSeleccionada = (fecha) => {
-    setFechaSeleccionada(fecha);
-  };
-
-  const cambiarVistaCalendario = (vista) => {
-    setVistaCalendario(vista);
+    const ahora = new Date();
+    return turnos
+      .filter(turno => new Date(turno.fechaHora) >= ahora)
+      .sort((a, b) => new Date(a.fechaHora) - new Date(b.fechaHora));
   };
 
   const value = {
     turnos,
-    turnoSeleccionado,
-    fechaSeleccionada,
-    vistaCalendario,
     loading,
     cargarTurnos,
     agregarTurno,
     actualizarTurno,
-    cambiarEstadoTurno,
     eliminarTurno,
     obtenerTurnosPorPaciente,
     obtenerTurnosPorFecha,
-    obtenerTurnosPorRango,
-    obtenerTurnosProximos,
-    seleccionarTurno,
-    cambiarFechaSeleccionada,
-    cambiarVistaCalendario
+    obtenerTurnosProximos
   };
 
-  return (
-    <TurnosContext.Provider value={value}>
-      {children}
-    </TurnosContext.Provider>
-  );
+  return <TurnosContext.Provider value={value}>{children}</TurnosContext.Provider>;
 };

@@ -15,10 +15,10 @@ const ConsultaDetalle = () => {
   const [paciente, setPaciente] = useState(null);
 
   useEffect(() => {
-    const consultaEncontrada = consultas.find(c => c.id === id);
+    const consultaEncontrada = consultas.find(c => c.id == id);
     if (consultaEncontrada) {
       setConsulta(consultaEncontrada);
-      const pacienteEncontrado = pacientes.find(p => p.id === consultaEncontrada.pacienteId);
+      const pacienteEncontrado = pacientes.find(p => p.id == consultaEncontrada.pacienteId);
       setPaciente(pacienteEncontrado);
     } else {
       navigate('/consultas');

@@ -37,7 +37,7 @@ const TurnoForm = () => {
   // Cargar datos si es edición
   useEffect(() => {
     if (id) {
-      const turno = turnos.find(t => t.id === id);
+      const turno = turnos.find(t => t.id == id);
       if (turno) {
         setIsEditing(true);
         setFormData({
