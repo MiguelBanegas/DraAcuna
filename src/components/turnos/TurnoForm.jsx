@@ -26,6 +26,7 @@ const TurnoForm = () => {
   const [submitError, setSubmitError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const selectRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   // Preparar opciones para react-select
   const pacientesOptions = pacientes.map(p => ({
