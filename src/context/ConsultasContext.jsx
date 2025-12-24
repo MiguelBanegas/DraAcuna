@@ -78,6 +78,15 @@ export const ConsultasProvider = ({ children }) => {
     }
   };
 
+  const obtenerConsultasPorPaciente = async (pacienteId) => {
+    try {
+      return await consultasService.getConsultasByPaciente(pacienteId);
+    } catch (error) {
+      console.error('Error al obtener consultas por paciente:', error);
+      return [];
+    }
+  };
+
   const value = {
     consultas,
     loading,
@@ -85,7 +94,8 @@ export const ConsultasProvider = ({ children }) => {
     agregarConsulta,
     actualizarConsulta,
     eliminarConsulta,
-    buscarConsultas
+    buscarConsultas,
+    obtenerConsultasPorPaciente
   };
 
   return <ConsultasContext.Provider value={value}>{children}</ConsultasContext.Provider>;
