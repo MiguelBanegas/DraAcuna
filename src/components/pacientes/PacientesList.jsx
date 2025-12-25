@@ -9,7 +9,7 @@ const PacientesList = () => {
   const navigate = useNavigate();
   const { pacientes, eliminarPaciente, buscarPacientes } = usePacientes();
   const [searchTerm, setSearchTerm] = useState('');
-  const [pacientesFiltrados, setPacientesFiltrados] = useState(pacientes);
+  const [pacientesFiltrados, setPacientesFiltrados] = useState([]);
   const searchInputRef = useRef(null);
 
   // Auto-focus en el campo de búsqueda al cargar el componente
@@ -24,8 +24,8 @@ const PacientesList = () => {
     const term = e.target.value;
     setSearchTerm(term);
     
-    if (term.trim() === '') {
-      setPacientesFiltrados(pacientes);
+    if (term.trim().length < 3) {
+      setPacientesFiltrados([]);
     } else {
       const resultados = buscarPacientes(term);
       setPacientesFiltrados(resultados);
@@ -49,6 +49,11 @@ const PacientesList = () => {
     if (result.isConfirmed) {
       try {
         await eliminarPaciente(id);
+        // Actualizar la lista filtrada tras eliminar
+        if (searchTerm.trim().length >= 3) {
+          const resultados = buscarPacientes(searchTerm);
+          setPacientesFiltrados(resultados);
+        }
         await Swal.fire({
           title: 'Eliminado',
           text: 'El paciente ha sido eliminado correctamente.',
@@ -76,14 +81,8 @@ const PacientesList = () => {
     return edad;
   };
 
-  // Actualizar lista cuando cambian los pacientes
-  useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setPacientesFiltrados(pacientes);
-    }
-  }, [pacientes, searchTerm]);
-
-  const listaMostrar = searchTerm.trim() === '' ? pacientes : pacientesFiltrados;
+  // El sistema ahora no carga todos al inicio, solo muestra los filtrados
+  const listaMostrar = pacientesFiltrados;
 
   return (
     <Container>
@@ -111,11 +110,16 @@ const PacientesList = () => {
             <Form.Control
               ref={searchInputRef}
               type="text"
-              placeholder="Buscar por nombre o DNI..."
+              placeholder="Buscar por nombre o DNI (mínimo 3 caracteres)..."
               value={searchTerm}
               onChange={handleSearch}
             />
           </InputGroup>
+          {searchTerm.trim().length > 0 && searchTerm.trim().length < 3 && (
+            <Form.Text className="text-muted ms-1">
+              Ingrese al menos 3 caracteres para buscar
+            </Form.Text>
+          )}
         </Col>
         <Col md={6} className="text-end">
           <Badge bg="secondary" className="fs-6">
@@ -129,15 +133,17 @@ const PacientesList = () => {
           {listaMostrar.length === 0 ? (
             <div className="text-center py-5">
               <p className="text-muted">
-                {searchTerm ? 'No se encontraron pacientes' : 'No hay pacientes registrados'}
+                {searchTerm.trim().length >= 3 
+                  ? 'No se encontraron pacientes' 
+                  : 'Ingrese un nombre o DNI para buscar pacientes (mínimo 3 caracteres)'}
               </p>
-              {!searchTerm && (
+              {searchTerm.trim().length === 0 && (
                 <Button 
-                  variant="primary" 
+                  variant="outline-primary" 
                   onClick={() => navigate('/pacientes/nuevo')}
                 >
                   <FaPlus className="me-2" />
-                  Agregar Primer Paciente
+                  Agregar Nuevo Paciente
                 </Button>
               )}
             </div>

@@ -10,7 +10,7 @@ const HistoriaClinica = () => {
   const { historiasClinicas } = useHistoriaClinica();
   const { pacientes, buscarPacientes } = usePacientes();
   const [searchTerm, setSearchTerm] = useState('');
-  const [pacientesFiltrados, setPacientesFiltrados] = useState(pacientes);
+  const [pacientesFiltrados, setPacientesFiltrados] = useState([]);
   const searchInputRef = useRef(null);
 
   useEffect(() => {
@@ -20,12 +20,12 @@ const HistoriaClinica = () => {
   }, []);
 
   useEffect(() => {
-    // Deferir updates para evitar setState síncrono dentro del efecto
-    if (searchTerm.trim() === '') {
-      Promise.resolve().then(() => setPacientesFiltrados([]));
+    const term = searchTerm.trim();
+    if (term.length < 3) {
+      setPacientesFiltrados([]);
     } else {
-      const resultados = buscarPacientes(searchTerm);
-      Promise.resolve().then(() => setPacientesFiltrados(resultados));
+      const resultados = buscarPacientes(term);
+      setPacientesFiltrados(resultados);
     }
   }, [searchTerm, pacientes, buscarPacientes]);
 
@@ -61,12 +61,17 @@ const HistoriaClinica = () => {
             <Form.Control
               ref={searchInputRef}
               type="text"
-              placeholder="Buscar paciente por nombre o DNI..."
+              placeholder="Buscar paciente (mínimo 3 caracteres)..."
               value={searchTerm}
               onChange={handleSearch}
               className="border-start-0 ps-0"
             />
           </InputGroup>
+          {searchTerm.trim().length > 0 && searchTerm.trim().length < 3 && (
+            <Form.Text className="text-muted ms-1">
+              Ingrese al menos 3 caracteres para buscar
+            </Form.Text>
+          )}
         </Col>
       </Row>
 
@@ -87,7 +92,9 @@ const HistoriaClinica = () => {
                 {pacientesFiltrados.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="text-center py-5 text-muted">
-                      {searchTerm ? 'No se encontraron pacientes que coincidan con la búsqueda' : 'No hay pacientes registrados'}
+                      {searchTerm.trim().length >= 3 
+                        ? 'No se encontraron pacientes que coincidan con la búsqueda' 
+                        : 'Ingrese un nombre o DNI para buscar (mínimo 3 caracteres)'}
                     </td>
                   </tr>
                 ) : (

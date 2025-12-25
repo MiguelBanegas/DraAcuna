@@ -23,32 +23,38 @@ const ConsultasList = () => {
     }
   }, []);
 
-  const handleConsultar = async () => {
-    setLoadingSearch(true);
-    await buscarConsultas({
-      q: searchTerm,
-      pacienteId: filtroPaciente,
-      fecha: filtroFecha
-    });
-    setLoadingSearch(false);
-  };
-
-  // Ejecutar búsqueda cuando se selecciona un paciente o se cambia la fecha
+  // Ejecutar búsqueda automática cuando cambian los filtros
   useEffect(() => {
-    if (filtroPaciente || filtroFecha) {
+    const term = searchTerm.trim();
+    
+    // Solo buscamos si hay paciente, fecha, o al menos 3 caracteres de texto
+    if (term.length >= 3 || filtroPaciente || filtroFecha) {
       const doSearch = async () => {
         setLoadingSearch(true);
         await buscarConsultas({
-          q: searchTerm,
+          q: term,
           pacienteId: filtroPaciente,
           fecha: filtroFecha
         });
         setLoadingSearch(false);
       };
-      doSearch();
+
+      // Debounce simple para el campo de texto si es lo único que cambió
+      const timeoutId = setTimeout(() => {
+        doSearch();
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    } else {
+      // Si no se cumple ninguna condición, forzamos lista vacía (opcional, 
+      // pero cumple con el pedido de "lo mismo" que pacientes)
+      const clearSearch = async () => {
+        await buscarConsultas({ q: '_____no_match_____' }); // Truco para limpiar lista en el context
+      };
+      clearSearch();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtroPaciente, filtroFecha]);
+  }, [searchTerm, filtroPaciente, filtroFecha]);
 
   const handleDelete = async (id, pacienteNombre) => {
     const result = await Swal.fire({
@@ -107,22 +113,25 @@ const ConsultasList = () => {
             <Col md={4}>
               <InputGroup>
                 <InputGroup.Text>
-                  <FaSearch />
+                  {loadingSearch ? (
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  ) : (
+                    <FaSearch />
+                  )}
                 </InputGroup.Text>
                 <Form.Control
                   ref={searchInputRef}
                   type="text"
-                  placeholder="Buscar por paciente, DNI, motivo o diagnóstico..."
+                  placeholder="Buscar texto (min. 3 caracteres)..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleConsultar();
-                    }
-                  }}
                 />
               </InputGroup>
+              {searchTerm.trim().length > 0 && searchTerm.trim().length < 3 && (
+                <Form.Text className="text-muted ms-1">
+                  Mínimo 3 caracteres para buscar por texto
+                </Form.Text>
+              )}
             </Col>
             <Col md={4}>
               <Form.Select
@@ -146,16 +155,7 @@ const ConsultasList = () => {
           </Row>
 
           <Row className="mt-3">
-            <Col className="d-flex gap-2">
-              <Button 
-                variant="primary" 
-                onClick={handleConsultar}
-                disabled={loadingSearch}
-                className="d-flex align-items-center"
-              >
-                {loadingSearch ? '...' : <FaSearch className="me-2" />} 
-                Consultar
-              </Button>
+            <Col className="d-flex gap-2 align-items-center">
               <Button 
                 variant="success" 
                 onClick={() => navigate('/consultas/nueva')}
@@ -168,6 +168,7 @@ const ConsultasList = () => {
               {(searchTerm || filtroFecha || filtroPaciente) && (
                 <Button 
                   variant="outline-secondary"
+                  size="sm"
                   onClick={() => {
                     setSearchTerm('');
                     setFiltroFecha('');
@@ -196,9 +197,9 @@ const ConsultasList = () => {
           {consultas.length === 0 ? (
             <div className="text-center py-5">
               <p className="text-muted">
-                {searchTerm || filtroFecha || filtroPaciente
+                {(searchTerm.trim().length >= 3 || filtroFecha || filtroPaciente)
                   ? 'No se encontraron consultas con los filtros aplicados'
-                  : 'Utilice los filtros superiores para buscar consultas'}
+                  : 'Ingrese al menos 3 caracteres, seleccione un paciente o una fecha para buscar'}
               </p>
             </div>
           ) : (
