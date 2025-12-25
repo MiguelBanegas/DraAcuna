@@ -3,6 +3,19 @@ import * as db from "../db/index.js";
 // Obtener todos los pacientes
 export const getAllPacientes = async (req, res) => {
   try {
+    const { q, limit } = req.query;
+    // Si se proporciona un query `q`, buscar por nombre o DNI (ILIKE para case-insensitive)
+    if (q) {
+      const max = Math.min(parseInt(limit, 10) || 50, 200);
+      const search = `%${q}%`;
+      const { rows } = await db.query(
+        `SELECT * FROM pacientes WHERE nombre_completo ILIKE $1 OR dni::text ILIKE $1 ORDER BY nombre_completo ASC LIMIT $2`,
+        [search, max]
+      );
+      return res.json(rows);
+    }
+
+    // Si no hay query, devolver todos (cuidado con volumen en producción)
     const { rows } = await db.query(
       "SELECT * FROM pacientes ORDER BY nombre_completo ASC"
     );

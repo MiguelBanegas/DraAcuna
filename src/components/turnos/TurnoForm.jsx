@@ -1,10 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
-import { Form, Button, Container, Row, Col, Card, Alert } from 'react-bootstrap';
+import { Form, Button, Container, Row, Col, Card } from 'react-bootstrap';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { FaSave, FaTimes } from 'react-icons/fa';
-import Select from 'react-select';
+import Swal from 'sweetalert2';
+import AsyncSelect from 'react-select/async';
+import { searchPacientes, getPacienteById } from '../../services/pacientesService';
 import { useTurnos } from '../../context/TurnosContext';
 import { usePacientes } from '../../context/PacientesContext';
+
+// Función auxiliar para convertir fecha UTC a local para el input datetime-local
+const formatearFechaLocal = (fechaUTC) => {
+  if (!fechaUTC) return '';
+  const fecha = new Date(fechaUTC);
+  const offset = fecha.getTimezoneOffset() * 60000;
+  const fechaLocal = new Date(fecha.getTime() - offset);
+  return fechaLocal.toISOString().slice(0, 16);
+};
 
 const TurnoForm = () => {
   const navigate = useNavigate();
@@ -13,20 +24,63 @@ const TurnoForm = () => {
   const { turnos, agregarTurno, actualizarTurno } = useTurnos();
   const { pacientes } = usePacientes();
   
-  const [formData, setFormData] = useState({
-    pacienteId: location.state?.pacienteId || '',
-    fechaHora: '',
-    duracion: '30',
-    estado: 'pendiente',
-    motivo: '',
-    observaciones: ''
+  const isEditing = !!id;
+
+  const [formData, setFormData] = useState(() => {
+    const initialData = {
+      pacienteId: location.state?.pacienteId || '',
+      fechaHora: '',
+      duracion: '30',
+      estado: 'pendiente',
+      motivo: '',
+      observaciones: ''
+    };
+
+    // Si estamos editando y los turnos ya están cargados (ej: navegando desde la lista)
+    if (id && turnos && turnos.length > 0) {
+      const turno = turnos.find(t => String(t.id) === String(id));
+      if (turno) {
+        return {
+          pacienteId: turno.pacienteId || '',
+          fechaHora: formatearFechaLocal(turno.fechaHora),
+          duracion: turno.duracion?.toString() || '30',
+          estado: turno.estado || 'pendiente',
+          motivo: turno.motivo || '',
+          observaciones: turno.observaciones || ''
+        };
+      }
+    }
+
+    if (!id) {
+      const ahora = new Date();
+      ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+      const minutos = ahora.getMinutes();
+      if (minutos < 30) {
+        ahora.setMinutes(30);
+      } else {
+        ahora.setHours(ahora.getHours() + 1);
+        ahora.setMinutes(0);
+      }
+      ahora.setSeconds(0);
+      initialData.fechaHora = ahora.toISOString().slice(0, 16);
+    }
+    return initialData;
   });
 
   const [errors, setErrors] = useState({});
-  const [submitError, setSubmitError] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
   const selectRef = useRef(null);
   const searchInputRef = useRef(null);
+  const [pacienteOption, setPacienteOption] = useState(null);
+  const loadTimer = useRef(null);
+  
+  // Ref para evitar re-inicializar el formulario si ya se cargaron los datos.
+  // Se inicializa en true si los datos ya estaban disponibles durante el primer render.
+  const initializedRef = useRef(!!(id && turnos.length > 0 && turnos.find(t => String(t.id) === String(id))));
+
+  // Resetear el estado de inicialización si cambia el ID (por si el componente se reutiliza)
+  useEffect(() => {
+    initializedRef.current = false;
+  }, [id]);
 
   // Preparar opciones para react-select
   const pacientesOptions = pacientes.map(p => ({
@@ -37,48 +91,35 @@ const TurnoForm = () => {
 
   // Cargar datos si es edición
   useEffect(() => {
-    if (id) {
-      const turno = turnos.find(t => t.id == id);
+    if (id && !initializedRef.current) {
+      const turno = turnos.find(t => String(t.id) === String(id));
       if (turno) {
-        setIsEditing(true);
-        // Convertir fecha UTC a local para el input datetime-local
-        const formatearFechaLocal = (fechaUTC) => {
-          const fecha = new Date(fechaUTC);
-          const offset = fecha.getTimezoneOffset() * 60000;
-          const fechaLocal = new Date(fecha.getTime() - offset);
-          return fechaLocal.toISOString().slice(0, 16);
-        };
-        
-        setFormData({
-          pacienteId: turno.pacienteId || '',
-          fechaHora: turno.fechaHora ? formatearFechaLocal(turno.fechaHora) : '',
-          duracion: turno.duracion?.toString() || '30',
-          estado: turno.estado || 'pendiente',
-          motivo: turno.motivo || '',
-          observaciones: turno.observaciones || ''
+        // Defer the state update to avoid synchronous setState in effect body
+        Promise.resolve().then(() => {
+          setFormData({
+            pacienteId: turno.pacienteId || '',
+            fechaHora: formatearFechaLocal(turno.fechaHora),
+            duracion: turno.duracion?.toString() || '30',
+            estado: turno.estado || 'pendiente',
+            motivo: turno.motivo || '',
+            observaciones: turno.observaciones || ''
+          });
+          // try to set pacienteOption for AsyncSelect
+          const found = pacientes.find(p => p.id === turno.pacienteId);
+          if (found) {
+            setPacienteOption({ value: found.id, label: `${found.nombreCompleto} - DNI: ${found.dni}`, paciente: found });
+          } else if (turno.pacienteId) {
+            getPacienteById(turno.pacienteId).then(p => {
+              setPacienteOption({ value: p.id, label: `${p.nombreCompleto} - DNI: ${p.dni}`, paciente: p });
+            }).catch(err => console.error('Error cargando paciente:', err));
+          }
+          initializedRef.current = true;
         });
-      } else {
+      } else if (turnos.length > 0) {
         navigate('/turnos');
       }
-    } else {
-      // Si es nuevo turno, sugerir próxima hora disponible
-      const ahora = new Date();
-      ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
-      // Redondear a la próxima media hora
-      const minutos = ahora.getMinutes();
-      if (minutos < 30) {
-        ahora.setMinutes(30);
-      } else {
-        ahora.setHours(ahora.getHours() + 1);
-        ahora.setMinutes(0);
-      }
-      ahora.setSeconds(0);
-      setFormData(prev => ({
-        ...prev,
-        fechaHora: ahora.toISOString().slice(0, 16)
-      }));
     }
-  }, [id, turnos, navigate]);
+  }, [id, turnos, navigate, pacientes]);
 
   // Auto-focus en el campo de búsqueda al cargar el componente
   useEffect(() => {
@@ -100,7 +141,25 @@ const TurnoForm = () => {
         [name]: ''
       }));
     }
-    setSubmitError('');
+    // usamos toasts para mostrar errores, no mantenemos estado submitError
+  };
+
+  // AsyncSelect loadOptions con debounce
+  const loadOptions = (inputValue) => {
+    return new Promise((resolve) => {
+      clearTimeout(loadTimer.current);
+      loadTimer.current = setTimeout(async () => {
+        if (!inputValue) return resolve([]);
+        try {
+          const results = await searchPacientes(inputValue, 30);
+          const options = results.map(p => ({ value: p.id, label: `${p.nombreCompleto} - DNI: ${p.dni}`, paciente: p }));
+          resolve(options);
+        } catch (err) {
+          console.error(err);
+          resolve([]);
+        }
+      }, 300);
+    });
   };
 
   const validateForm = () => {
@@ -136,7 +195,6 @@ const TurnoForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitError('');
 
     if (!validateForm()) {
       return;
@@ -154,12 +212,21 @@ const TurnoForm = () => {
       } else {
         await agregarTurno(turnoData);
       }
+
+      await Swal.fire({
+        title: '¡Guardado!',
+        text: isEditing ? 'El turno ha sido actualizado.' : 'El turno ha sido programado.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+
       navigate('/turnos');
     } catch (error) {
       if (error.message.includes('superposición') || error.message.includes('Ya existe')) {
-        setSubmitError('Ya existe un turno en ese horario. Por favor, elija otro horario.');
+        Swal.fire('Conflicto de Horario', 'Ya existe un turno en ese horario. Por favor, elija otro horario.', 'warning');
       } else {
-        setSubmitError('Error al guardar el turno. Por favor, intente nuevamente.');
+        Swal.fire('Error', 'No se pudo guardar el turno. Por favor, intente nuevamente.', 'error');
       }
     }
   };
@@ -174,11 +241,7 @@ const TurnoForm = () => {
         </Col>
       </Row>
 
-      {submitError && (
-        <Alert variant="danger" dismissible onClose={() => setSubmitError('')}>
-          {submitError}
-        </Alert>
-      )}
+          {/* Los errores de guardado se muestran con toast; no usar Alert inline aquí */}
 
       <Card>
         <Card.Body>
@@ -187,12 +250,13 @@ const TurnoForm = () => {
               <Col md={8}>
                 <Form.Group className="mb-3">
                   <Form.Label>Paciente *</Form.Label>
-                  <Select
+                  <AsyncSelect
+                    loadOptions={loadOptions}
                     ref={selectRef}
-                    options={pacientesOptions}
-                    value={pacientesOptions.find(opt => opt.value === formData.pacienteId) || null}
+                    value={pacienteOption || pacientesOptions.find(opt => opt.value === formData.pacienteId) || null}
                     onChange={(selectedOption) => {
                       setFormData(prev => ({ ...prev, pacienteId: selectedOption ? selectedOption.value : '' }));
+                      setPacienteOption(selectedOption || null);
                       if (errors.pacienteId) {
                         setErrors(prev => ({ ...prev, pacienteId: '' }));
                       }
@@ -250,12 +314,12 @@ const TurnoForm = () => {
             </Row>
 
             {pacienteSeleccionado && (
-              <Alert variant="info">
+              <div className="alert alert-info py-2 px-3 mb-3">
                 <strong>Paciente:</strong> {pacienteSeleccionado.nombreCompleto}
                 {pacienteSeleccionado.telefono && (
                   <> - Tel: {pacienteSeleccionado.telefono}</>
                 )}
-              </Alert>
+              </div>
             )}
 
             <Row>

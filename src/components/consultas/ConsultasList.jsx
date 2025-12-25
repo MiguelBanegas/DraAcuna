@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Table, Button, Form, InputGroup, Container, Row, Col, Card, Badge } from 'react-bootstrap';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useConsultas } from '../../context/ConsultasContext';
 import { usePacientes } from '../../context/PacientesContext';
+import Swal from 'sweetalert2';
 
 const ConsultasList = () => {
   const navigate = useNavigate();
@@ -32,12 +33,49 @@ const ConsultasList = () => {
     setLoadingSearch(false);
   };
 
+  // Ejecutar búsqueda cuando se selecciona un paciente o se cambia la fecha
+  useEffect(() => {
+    if (filtroPaciente || filtroFecha) {
+      const doSearch = async () => {
+        setLoadingSearch(true);
+        await buscarConsultas({
+          q: searchTerm,
+          pacienteId: filtroPaciente,
+          fecha: filtroFecha
+        });
+        setLoadingSearch(false);
+      };
+      doSearch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtroPaciente, filtroFecha]);
+
   const handleDelete = async (id, pacienteNombre) => {
-    if (window.confirm(`¿Está seguro de eliminar esta consulta de ${pacienteNombre}?`)) {
+    const result = await Swal.fire({
+      title: '¿Está seguro?',
+      text: `Está por eliminar la consulta de ${pacienteNombre}. Esta acción no se puede deshacer.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
       try {
         await eliminarConsulta(id);
+        await Swal.fire({
+          title: 'Eliminado',
+          text: 'La consulta ha sido eliminada correctamente.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } catch (error) {
-        alert('Error al eliminar consulta');
+        console.error('Error al eliminar consulta:', error);
+        Swal.fire('Error', 'No se pudo eliminar la consulta', 'error');
       }
     }
   };
@@ -77,6 +115,12 @@ const ConsultasList = () => {
                   placeholder="Buscar por paciente, DNI, motivo o diagnóstico..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleConsultar();
+                    }
+                  }}
                 />
               </InputGroup>
             </Col>

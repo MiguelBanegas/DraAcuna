@@ -110,3 +110,22 @@ export const getTurnosByPaciente = async (pacienteId) => {
     throw error;
   }
 };
+
+export const updateEstadoTurno = async (id, estado) => {
+  try {
+    const response = await fetch(`${API_URL}/turnos/${id}/estado`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ estado })
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al actualizar estado del turno');
+    }
+    const data = await response.json();
+    return mapTurnoFromAPI(data);
+  } catch (error) {
+    console.error('Error en updateEstadoTurno:', error);
+    throw error;
+  }
+};

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Card, Button, ListGroup, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, ListGroup } from 'react-bootstrap';
 import { FaEdit, FaArrowLeft, FaUser, FaCalendarAlt, FaStethoscope } from 'react-icons/fa';
 import { useConsultas } from '../../context/ConsultasContext';
 import { usePacientes } from '../../context/PacientesContext';
@@ -17,9 +17,12 @@ const ConsultaDetalle = () => {
   useEffect(() => {
     const consultaEncontrada = consultas.find(c => c.id == id);
     if (consultaEncontrada) {
-      setConsulta(consultaEncontrada);
-      const pacienteEncontrado = pacientes.find(p => p.id == consultaEncontrada.pacienteId);
-      setPaciente(pacienteEncontrado);
+      // Deferir setState para evitar setState síncrono en el efecto
+      Promise.resolve().then(() => {
+        setConsulta(consultaEncontrada);
+        const pacienteEncontrado = pacientes.find(p => p.id == consultaEncontrada.pacienteId);
+        setPaciente(pacienteEncontrado);
+      });
     } else {
       navigate('/consultas');
     }
@@ -123,9 +126,9 @@ const ConsultaDetalle = () => {
                   </div>
                 </>
               ) : (
-                <Alert variant="warning" className="mb-0">
+                <div className="alert alert-warning mb-0">
                   Paciente no encontrado
-                </Alert>
+                </div>
               )}
             </Card.Body>
           </Card>

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Form, Button, Container, Row, Col, Card, Alert, ListGroup } from 'react-bootstrap';
+import { Form, Button, Container, Row, Col, Card, ListGroup } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaSave, FaTimes, FaPrint, FaFileMedical, FaStethoscope } from 'react-icons/fa';
 import { useHistoriaClinica } from '../../context/HistoriaClinicaContext';
 import { usePacientes } from '../../context/PacientesContext';
 import { useConsultas } from '../../context/ConsultasContext';
+import Swal from 'sweetalert2';
 
 const HistoriaClinicaForm = () => {
   const navigate = useNavigate();
@@ -18,7 +19,6 @@ const HistoriaClinicaForm = () => {
   const [observaciones, setObservaciones] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const fetchDatos = async () => {
       setLoading(true);
@@ -41,8 +41,8 @@ const HistoriaClinicaForm = () => {
 
   if (!paciente) {
     return (
-      <Container className="py-5">
-        <Alert variant="danger">Paciente no encontrado</Alert>
+      <Container className="py-5 text-center">
+        <div className="alert alert-danger mb-4">Paciente no encontrado</div>
         <Button onClick={() => navigate('/historia-clinica')}>Volver</Button>
       </Container>
     );
@@ -59,10 +59,21 @@ const HistoriaClinicaForm = () => {
       };
 
       const nuevaHistoria = await agregarHistoriaClinica(historiaData);
+      
+      await Swal.fire({
+        title: '¡Guardada!',
+        text: 'La historia clínica ha sido generada correctamente.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+      
       // Una vez guardada, vamos al detalle normal
       navigate(`/historia-clinica/${nuevaHistoria.id}`);
     } catch (error) {
-      setSubmitError(error.message || 'Error al guardar la historia clínica');
+      const msg = error?.message || 'Error al guardar la historia clínica';
+      setSubmitError(msg);
+      Swal.fire('Error', msg, 'error');
     }
   };
 
@@ -98,11 +109,7 @@ const HistoriaClinicaForm = () => {
         </div>
       </div>
 
-      {submitError && (
-        <Alert variant="danger" className="no-print" dismissible onClose={() => setSubmitError('')}>
-          {submitError}
-        </Alert>
-      )}
+
 
       {/* Vista de Historia Clínica (Lo que se imprime) */}
       <div className="print-container">

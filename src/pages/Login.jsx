@@ -81,11 +81,9 @@ const Login = () => {
                   <p className="text-muted">Ingrese sus credenciales</p>
                 </div>
 
-                {error && (
-                  <Alert variant="danger" dismissible onClose={() => setError('')}>
-                    {error}
-                  </Alert>
-                )}
+                {error && <Alert variant="danger">{error}</Alert>}
+
+
 
                 <Form onSubmit={handleSubmit}>
                   <Form.Group className="mb-3">

@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Table, Button, Form, InputGroup, Container, Row, Col, Card, Badge } from 'react-bootstrap';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaCheck, FaTimes, FaClock } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useTurnos } from '../../context/TurnosContext';
 import { usePacientes } from '../../context/PacientesContext';
+import Swal from 'sweetalert2';
 
 const TurnosList = () => {
   const navigate = useNavigate();
@@ -37,7 +38,12 @@ const TurnosList = () => {
     let cumpleFecha = true;
     if (filtroFecha) {
       const fechaTurno = new Date(turno.fechaHora);
-      const fechaFiltro = new Date(filtroFecha);
+      // `filtroFecha` viene del input type="date" en formato YYYY-MM-DD.
+      // new Date('YYYY-MM-DD') se interpreta como UTC en algunos navegadores,
+      // lo que puede desplazar la fecha al día anterior según el huso.
+      // Parseamos manualmente para crear una fecha en horario local.
+      const parts = filtroFecha.split('-').map(Number);
+      const fechaFiltro = new Date(parts[0], parts[1] - 1, parts[2]);
       cumpleFecha = (
         fechaTurno.getFullYear() === fechaFiltro.getFullYear() &&
         fechaTurno.getMonth() === fechaFiltro.getMonth() &&
@@ -53,11 +59,31 @@ const TurnosList = () => {
   }).sort((a, b) => new Date(a.fechaHora) - new Date(b.fechaHora)); // Ordenar por fecha
 
   const handleDelete = async (id, pacienteNombre) => {
-    if (window.confirm(`¿Está seguro de eliminar este turno de ${pacienteNombre}?`)) {
+    const result = await Swal.fire({
+      title: '¿Está seguro?',
+      text: `Está por eliminar el turno de ${pacienteNombre}. Esta acción no se puede deshacer.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
       try {
         await eliminarTurno(id);
+        await Swal.fire({
+          title: 'Eliminado',
+          text: 'El turno ha sido eliminado correctamente.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } catch (error) {
-        alert('Error al eliminar turno');
+        console.error('Error al eliminar turno:', error);
+        Swal.fire('Error', 'No se pudo eliminar el turno', 'error');
       }
     }
   };
@@ -66,7 +92,8 @@ const TurnosList = () => {
     try {
       await cambiarEstadoTurno(id, nuevoEstado);
     } catch (error) {
-      alert('Error al cambiar estado del turno');
+      console.error('Error al cambiar estado del turno:', error);
+      Swal.fire('Error', 'No se pudo cambiar el estado del turno', 'error');
     }
   };
 
@@ -246,7 +273,7 @@ const TurnosList = () => {
                         <td>{turno.duracion || 30} min</td>
                         <td>
                           <Badge bg={estadoColor[turno.estado]}>
-                            <IconoEstado className="me-1" />
+                            {IconoEstado ? <IconoEstado className="me-1" /> : null}
                             {turno.estado}
                           </Badge>
                         </td>

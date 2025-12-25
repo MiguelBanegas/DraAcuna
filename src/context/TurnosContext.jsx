@@ -53,6 +53,17 @@ export const TurnosProvider = ({ children }) => {
     }
   };
 
+  const cambiarEstadoTurno = async (id, nuevoEstado) => {
+    try {
+      const turnoActualizado = await turnosService.updateEstadoTurno(id, nuevoEstado);
+      setTurnos(prev => prev.map(t => t.id == id ? turnoActualizado : t));
+      return turnoActualizado;
+    } catch (error) {
+      console.error('Error al cambiar estado del turno:', error);
+      throw error;
+    }
+  };
+
   const eliminarTurno = async (id) => {
     try {
       await turnosService.deleteTurno(id);
@@ -97,6 +108,7 @@ export const TurnosProvider = ({ children }) => {
     agregarTurno,
     actualizarTurno,
     eliminarTurno,
+    cambiarEstadoTurno,
     obtenerTurnosPorPaciente,
     obtenerTurnosPorFecha,
     obtenerTurnosProximos

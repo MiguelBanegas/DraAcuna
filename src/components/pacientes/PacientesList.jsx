@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Table, Button, Form, InputGroup, Badge, Container, Row, Col, Card } from 'react-bootstrap';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { usePacientes } from '../../context/PacientesContext';
+import Swal from 'sweetalert2';
 
 const PacientesList = () => {
   const navigate = useNavigate();
@@ -33,13 +34,31 @@ const PacientesList = () => {
 
   // Manejar eliminación con confirmación
   const handleDelete = async (id, nombre) => {
-    if (window.confirm(`¿Está seguro de eliminar al paciente ${nombre}?`)) {
+    const result = await Swal.fire({
+      title: '¿Está seguro?',
+      text: `Está por eliminar al paciente ${nombre}. Esta acción no se puede deshacer.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
       try {
         await eliminarPaciente(id);
-        // Actualizar lista filtrada
-        setPacientesFiltrados(prev => prev.filter(p => p.id !== id));
+        await Swal.fire({
+          title: 'Eliminado',
+          text: 'El paciente ha sido eliminado correctamente.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } catch (error) {
-        alert('Error al eliminar paciente');
+        console.error('Error al eliminar paciente:', error);
+        Swal.fire('Error', 'No se pudo eliminar al paciente', 'error');
       }
     }
   };
@@ -58,11 +77,11 @@ const PacientesList = () => {
   };
 
   // Actualizar lista cuando cambian los pacientes
-  useState(() => {
+  useEffect(() => {
     if (searchTerm.trim() === '') {
       setPacientesFiltrados(pacientes);
     }
-  }, [pacientes]);
+  }, [pacientes, searchTerm]);
 
   const listaMostrar = searchTerm.trim() === '' ? pacientes : pacientesFiltrados;
 

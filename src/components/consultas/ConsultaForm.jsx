@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Form, Button, Container, Row, Col, Card, Alert } from 'react-bootstrap';
+import { useState, useEffect, useRef } from 'react';
+import { Form, Button, Container, Row, Col, Card } from 'react-bootstrap';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { FaSave, FaTimes } from 'react-icons/fa';
-import Select from 'react-select';
+import Swal from 'sweetalert2';
+import AsyncSelect from 'react-select/async';
+import { searchPacientes, getPacienteById } from '../../services/pacientesService';
 import { useConsultas } from '../../context/ConsultasContext';
 import { usePacientes } from '../../context/PacientesContext';
 
@@ -40,6 +42,8 @@ const ConsultaForm = () => {
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [pacienteOption, setPacienteOption] = useState(null);
+  const loadTimer = useRef(null);
 
   // Preparar opciones para react-select
   const pacientesOptions = pacientes.map(p => ({
@@ -53,34 +57,45 @@ const ConsultaForm = () => {
     if (id) {
       const consulta = consultas.find(c => c.id == id);
       if (consulta) {
-        setIsEditing(true);
-        // Convertir fecha UTC a local para el input datetime-local
-        const formatearFechaLocal = (fechaUTC) => {
-          const fecha = new Date(fechaUTC);
-          const offset = fecha.getTimezoneOffset() * 60000;
-          const fechaLocal = new Date(fecha.getTime() - offset);
-          return fechaLocal.toISOString().slice(0, 16);
-        };
-        
-        setFormData({
-          pacienteId: consulta.pacienteId || '',
-          fechaHora: consulta.fechaHora ? formatearFechaLocal(consulta.fechaHora) : '',
-          motivo: consulta.motivo || '',
-          diagnostico: consulta.diagnostico || '',
-          tratamiento: consulta.tratamiento || '',
-          observaciones: consulta.observaciones || '',
-          proximaConsulta: consulta.proximaConsulta || '',
-          signosVitales: consulta.signosVitales || {
-            presionArterial: { sistolica: '', diastolica: '' },
-            frecuenciaCardiaca: '',
-            temperatura: '',
-            frecuenciaRespiratoria: '',
-            saturacionO2: '',
-            peso: '',
-            talla: '',
-            imc: ''
-          }
-        });
+        // Deferir updates de estado para evitar setState síncrono en el efecto
+        Promise.resolve().then(() => {
+          setIsEditing(true);
+          // Convertir fecha UTC a local para el input datetime-local
+          const formatearFechaLocal = (fechaUTC) => {
+            const fecha = new Date(fechaUTC);
+            const offset = fecha.getTimezoneOffset() * 60000;
+            const fechaLocal = new Date(fecha.getTime() - offset);
+            return fechaLocal.toISOString().slice(0, 16);
+          };
+          setFormData({
+            pacienteId: consulta.pacienteId || '',
+            fechaHora: consulta.fechaHora ? formatearFechaLocal(consulta.fechaHora) : '',
+            motivo: consulta.motivo || '',
+            diagnostico: consulta.diagnostico || '',
+            tratamiento: consulta.tratamiento || '',
+            observaciones: consulta.observaciones || '',
+            proximaConsulta: consulta.proximaConsulta || '',
+            signosVitales: consulta.signosVitales || {
+              presionArterial: { sistolica: '', diastolica: '' },
+              frecuenciaCardiaca: '',
+              temperatura: '',
+              frecuenciaRespiratoria: '',
+              saturacionO2: '',
+              peso: '',
+              talla: '',
+              imc: ''
+              }
+            });
+            // try to set pacienteOption for AsyncSelect
+            const found = pacientes.find(p => p.id === consulta.pacienteId);
+            if (found) {
+              setPacienteOption({ value: found.id, label: `${found.nombreCompleto} - DNI: ${found.dni}`, paciente: found });
+            } else if (consulta.pacienteId) {
+              getPacienteById(consulta.pacienteId).then(p => {
+                setPacienteOption({ value: p.id, label: `${p.nombreCompleto} - DNI: ${p.dni}`, paciente: p });
+              }).catch(err => console.error('Error cargando paciente:', err));
+            }
+          });
       } else {
         navigate('/consultas');
       }
@@ -88,12 +103,15 @@ const ConsultaForm = () => {
       // Si es nueva consulta, establecer fecha y hora actual
       const ahora = new Date();
       ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
-      setFormData(prev => ({
-        ...prev,
-        fechaHora: ahora.toISOString().slice(0, 16)
-      }));
+      // Deferir el setState para evitar setState síncrono dentro del efecto
+      Promise.resolve().then(() => {
+        setFormData(prev => ({
+          ...prev,
+          fechaHora: ahora.toISOString().slice(0, 16)
+        }));
+      });
     }
-  }, [id, consultas, navigate]);
+  }, [id, consultas, navigate, pacientes]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -111,13 +129,13 @@ const ConsultaForm = () => {
   };
 
   // Manejar cambios en signos vitales
-  const handleSignosVitalesChange = (e) => {
+  function handleSignosVitalesChange(e) {
     const { name, value } = e.target;
     const keys = name.split('.');
-    
+
     setFormData(prev => {
       const newFormData = { ...prev };
-      
+
       if (keys.length === 2) {
         // Para campos simples como temperatura, peso, etc.
         newFormData.signosVitales = {
@@ -134,7 +152,7 @@ const ConsultaForm = () => {
           }
         };
       }
-      
+
       // Calcular IMC automáticamente si hay peso y talla
       if ((keys[1] === 'peso' || keys[1] === 'talla') && newFormData.signosVitales.peso && newFormData.signosVitales.talla) {
         const peso = parseFloat(newFormData.signosVitales.peso);
@@ -143,12 +161,30 @@ const ConsultaForm = () => {
           newFormData.signosVitales.imc = (peso / (talla * talla)).toFixed(2);
         }
       }
-      
+
       return newFormData;
     });
-  };
+  }
 
-  const validateForm = () => {
+    // AsyncSelect loadOptions con debounce
+    const loadOptions = (inputValue) => {
+      return new Promise((resolve) => {
+        clearTimeout(loadTimer.current);
+        loadTimer.current = setTimeout(async () => {
+          if (!inputValue) return resolve([]);
+          try {
+            const results = await searchPacientes(inputValue, 30);
+            const options = results.map(p => ({ value: p.id, label: `${p.nombreCompleto} - DNI: ${p.dni}`, paciente: p }));
+            resolve(options);
+          } catch (err) {
+            console.error(err);
+            resolve([]);
+          }
+        }, 300);
+      });
+    };
+
+    const validateForm = () => {
     const newErrors = {};
 
     if (!formData.pacienteId) {
@@ -182,6 +218,8 @@ const ConsultaForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError('');
@@ -201,9 +239,20 @@ const ConsultaForm = () => {
       } else {
         await agregarConsulta(consultaData);
       }
+
+      await Swal.fire({
+        title: '¡Guardado!',
+        text: isEditing ? 'La consulta ha sido actualizada.' : 'La consulta ha sido registrada.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+
       navigate('/consultas');
     } catch (error) {
+      console.error('Error al guardar la consulta:', error);
       setSubmitError('Error al guardar la consulta. Por favor, intente nuevamente.');
+      Swal.fire('Error', 'No se pudo guardar la consulta', 'error');
     }
   };
 
@@ -217,11 +266,7 @@ const ConsultaForm = () => {
         </Col>
       </Row>
 
-      {submitError && (
-        <Alert variant="danger" dismissible onClose={() => setSubmitError('')}>
-          {submitError}
-        </Alert>
-      )}
+
 
       <Card>
         <Card.Body>
@@ -230,11 +275,12 @@ const ConsultaForm = () => {
               <Col md={8}>
                 <Form.Group className="mb-3">
                   <Form.Label>Paciente *</Form.Label>
-                  <Select
-                    options={pacientesOptions}
-                    value={pacientesOptions.find(opt => opt.value === formData.pacienteId) || null}
+                  <AsyncSelect
+                    loadOptions={loadOptions}
+                    value={pacienteOption || pacientesOptions.find(opt => opt.value === formData.pacienteId) || null}
                     onChange={(selectedOption) => {
                       setFormData(prev => ({ ...prev, pacienteId: selectedOption ? selectedOption.value : '' }));
+                      setPacienteOption(selectedOption || null);
                       if (errors.pacienteId) {
                         setErrors(prev => ({ ...prev, pacienteId: '' }));
                       }
@@ -292,12 +338,12 @@ const ConsultaForm = () => {
             </Row>
 
             {pacienteSeleccionado && (
-              <Alert variant="info">
+              <div className="alert alert-info py-2 px-3 mb-3">
                 <strong>Paciente seleccionado:</strong> {pacienteSeleccionado.nombreCompleto}
                 {pacienteSeleccionado.obraSocial && (
                   <> - Obra Social: {pacienteSeleccionado.obraSocial}</>
                 )}
-              </Alert>
+              </div>
             )}
 
             {/* Signos Vitales */}

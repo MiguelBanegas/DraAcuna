@@ -26,4 +26,22 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  // Server-side files: enable Node globals
+  {
+    files: ['server/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module'
+      }
+    }
+  },
+  // Context files: allow non-component exports for fast-refresh
+  {
+    files: ['src/context/**'],
+    rules: {
+      'react-refresh/only-export-components': 'off'
+    }
+  }
 ])

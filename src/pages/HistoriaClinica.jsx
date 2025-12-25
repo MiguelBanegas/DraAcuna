@@ -20,11 +20,12 @@ const HistoriaClinica = () => {
   }, []);
 
   useEffect(() => {
+    // Deferir updates para evitar setState síncrono dentro del efecto
     if (searchTerm.trim() === '') {
-      setPacientesFiltrados([]); // No mostrar nada si no hay búsqueda
+      Promise.resolve().then(() => setPacientesFiltrados([]));
     } else {
       const resultados = buscarPacientes(searchTerm);
-      setPacientesFiltrados(resultados);
+      Promise.resolve().then(() => setPacientesFiltrados(resultados));
     }
   }, [searchTerm, pacientes, buscarPacientes]);
 

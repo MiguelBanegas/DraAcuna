@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Badge, Form } from 'react-bootstrap';
 import { FaArrowLeft, FaEdit, FaPrint, FaEye, FaSave, FaTrash } from 'react-icons/fa';
 import { useHistoriaClinica } from '../../context/HistoriaClinicaContext';
 import { usePacientes } from '../../context/PacientesContext';
 import { useConsultas } from '../../context/ConsultasContext';
+import Swal from 'sweetalert2';
 
 const HistoriaClinicaDetalle = () => {
   const { id } = useParams();
@@ -48,14 +49,6 @@ const HistoriaClinicaDetalle = () => {
     return null;
   }
 
-  const formatearFecha = (fecha) => {
-    return new Date(fecha).toLocaleDateString('es-AR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
   const formatearFechaHora = (fecha) => {
     return new Date(fecha).toLocaleString('es-AR', {
       year: 'numeric',
@@ -83,12 +76,31 @@ const HistoriaClinicaDetalle = () => {
   };
 
   const handleEliminar = async () => {
-    if (window.confirm('¿Está seguro de que desea eliminar esta historia clínica? Esta acción no se puede deshacer.')) {
+    const result = await Swal.fire({
+      title: '¿Está seguro?',
+      text: 'Está por eliminar esta historia clínica. Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
       try {
         await eliminarHistoriaClinica(id);
         navigate('/historia-clinica');
+        await Swal.fire({
+          title: 'Eliminado',
+          text: 'La historia clínica ha sido eliminada correctamente.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } catch (error) {
-        alert('Error al eliminar la historia clínica');
+        Swal.fire('Error', 'No se pudo eliminar la historia clínica', 'error');
         console.error('Error al eliminar:', error);
       }
     }

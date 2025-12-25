@@ -20,12 +20,15 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     const savedToken = localStorage.getItem('token');
-    
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-      setToken(savedToken);
-    }
-    setLoading(false);
+
+    // Deferir las actualizaciones de estado para evitar setState síncrono en el efecto
+    Promise.resolve().then(() => {
+      if (savedUser && savedToken) {
+        setUser(JSON.parse(savedUser));
+        setToken(savedToken);
+      }
+      setLoading(false);
+    });
   }, []);
 
   const login = async (username, password) => {

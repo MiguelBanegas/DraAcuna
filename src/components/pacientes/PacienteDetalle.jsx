@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Card, Button, Badge, ListGroup, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Badge, ListGroup } from 'react-bootstrap';
 import { FaEdit, FaArrowLeft, FaCalendarAlt, FaStethoscope, FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaIdCard, FaFileMedical } from 'react-icons/fa';
 import { usePacientes } from '../../context/PacientesContext';
 import { useConsultas } from '../../context/ConsultasContext';
 import { useTurnos } from '../../context/TurnosContext';
-import { useHistoriaClinica } from '../../context/HistoriaClinicaContext';
 
 const PacienteDetalle = () => {
   const { id } = useParams();

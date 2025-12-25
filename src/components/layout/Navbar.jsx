@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Navbar as BSNavbar, Container, Nav, Button } from 'react-bootstrap';
 import { FaUserMd, FaUsers, FaStethoscope, FaCalendarAlt, FaSignOutAlt, FaFileMedical } from 'react-icons/fa';
@@ -6,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [expanded, setExpanded] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -13,14 +15,14 @@ const Navbar = () => {
   };
 
   return (
-    <BSNavbar bg="primary" variant="dark" expand="lg" className="mb-4">
+    <BSNavbar bg="primary" variant="dark" expand="lg" className="mb-4" expanded={expanded} onToggle={setExpanded}>
       <Container>
-        <BSNavbar.Brand as={Link} to="/">
+        <BSNavbar.Brand as={Link} to="/" onClick={() => setExpanded(false)}>
           <FaUserMd className="me-2" />
           Consultorio Dra Acuña
         </BSNavbar.Brand>
         <BSNavbar.Toggle aria-controls="basic-navbar-nav" />
-        <BSNavbar.Collapse id="basic-navbar-nav">
+        <BSNavbar.Collapse id="basic-navbar-nav" onClick={() => setExpanded(false)}>
           <Nav className="ms-auto">
             <Nav.Link as={Link} to="/">
               <FaUserMd className="me-1" />

@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
-import { Form, Button, Container, Row, Col, Card, Alert } from 'react-bootstrap';
+import React, { useState, useEffect, useRef } from 'react';
+import { Form, Button, Container, Row, Col, Card } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaSave, FaTimes } from 'react-icons/fa';
 import { usePacientes } from '../../context/PacientesContext';
+import Swal from 'sweetalert2';
 
 const PacienteForm = () => {
   const navigate = useNavigate();
@@ -31,17 +32,20 @@ const PacienteForm = () => {
     if (id) {
       const paciente = pacientes.find(p => p.id == id);
       if (paciente) {
-        setIsEditing(true);
-        setFormData({
-          nombreCompleto: paciente.nombreCompleto || '',
-          dni: paciente.dni || '',
-          fechaNacimiento: paciente.fechaNacimiento || '',
-          genero: paciente.genero || '',
-          telefono: paciente.telefono || '',
-          email: paciente.email || '',
-          direccion: paciente.direccion || '',
-          obraSocial: paciente.obraSocial || '',
-          numeroAfiliado: paciente.numeroAfiliado || ''
+        // Deferir setState para evitar setState síncrono en el efecto
+        Promise.resolve().then(() => {
+          setIsEditing(true);
+          setFormData({
+            nombreCompleto: paciente.nombreCompleto || '',
+            dni: paciente.dni || '',
+            fechaNacimiento: paciente.fechaNacimiento || '',
+            genero: paciente.genero || '',
+            telefono: paciente.telefono || '',
+            email: paciente.email || '',
+            direccion: paciente.direccion || '',
+            obraSocial: paciente.obraSocial || '',
+            numeroAfiliado: paciente.numeroAfiliado || ''
+          });
         });
       } else {
         navigate('/pacientes');
@@ -124,9 +128,20 @@ const PacienteForm = () => {
       } else {
         await agregarPaciente(formData);
       }
+      
+      await Swal.fire({
+        title: '¡Guardado!',
+        text: isEditing ? 'El paciente ha sido actualizado.' : 'El paciente ha sido registrado.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+      
       navigate('/pacientes');
     } catch (error) {
+      console.error('Error al guardar paciente:', error);
       setSubmitError('Error al guardar el paciente. Por favor, intente nuevamente.');
+      Swal.fire('Error', 'No se pudo guardar el paciente', 'error');
     }
   };
 
@@ -138,11 +153,7 @@ const PacienteForm = () => {
         </Col>
       </Row>
 
-      {submitError && (
-        <Alert variant="danger" dismissible onClose={() => setSubmitError('')}>
-          {submitError}
-        </Alert>
-      )}
+
 
       <Card>
         <Card.Body>
