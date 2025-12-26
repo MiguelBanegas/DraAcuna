@@ -32,6 +32,15 @@ body {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
+.hover-shadow:hover {
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-3px);
+}
+
+.transition-all {
+  transition: all 0.2s ease-in-out !important;
+}
+
 /* Botones */
 .btn {
   transition: all 0.2s;
@@ -248,9 +257,77 @@ body {
   }
 }
 
-/* Estilos para placeholders más sutiles */
-.placeholder-subtle::placeholder {
-  color: #adb5bd !important;
-  opacity: 0.6 !important;
-  font-weight: 300 !important;
+/* Glassmorphism */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 1rem;
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Modern Utilities */
+.text-gradient {
+  background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hover-up {
+  transition: transform 0.3s ease;
+}
+
+.hover-up:hover {
+  transform: translateY(-8px);
+}
+
+.bg-medical-pattern {
+  background-image: radial-gradient(#0d6efd 0.5px, #f8f9fa 0.5px);
+  background-size: 20px 20px;
+}
+
+.hero-overlay {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.6) 100%);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* Custom Spacing */
+.py-section {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.float-animation {
+  animation: float 4s ease-in-out infinite;
 }

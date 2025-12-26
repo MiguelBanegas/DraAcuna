@@ -28,51 +28,37 @@ function App() {
           <ConsultasProvider>
             <TurnosProvider>
               <HistoriaClinicaProvider>
-              <Routes>
-                {/* Ruta pública de Login */}
-                <Route path="/login" element={<Login />} />
-                
-                {/* Rutas protegidas */}
-                <Route
-                  path="/*"
-                  element={
-                    <ProtectedRoute>
-                      <div className="min-vh-100 bg-light">
-                        <Navbar />
-                        <Routes>
-                          <Route path="/" element={<Home />} />
-                          
-                          {/* Rutas de Pacientes */}
-                          <Route path="/pacientes" element={<Pacientes />} />
-                          <Route path="/pacientes/nuevo" element={<PacienteForm />} />
-                          <Route path="/pacientes/:id" element={<PacienteDetalle />} />
-                          <Route path="/pacientes/:id/editar" element={<PacienteForm />} />
-                          
-                          {/* Rutas de Consultas */}
-                          <Route path="/consultas" element={<Consultas />} />
-                          <Route path="/consultas/nueva" element={<ConsultaForm />} />
-                          <Route path="/consultas/:id" element={<ConsultaDetalle />} />
-                          <Route path="/consultas/:id/editar" element={<ConsultaForm />} />
-                          
-                          {/* Rutas de Turnos */}
-                          <Route path="/turnos" element={<Turnos />} />
-                          <Route path="/turnos/nuevo" element={<TurnoForm />} />
-                          <Route path="/turnos/:id/editar" element={<TurnoForm />} />
-                          
-                          {/* Rutas de Historia Clínica */}
-                          <Route path="/historia-clinica" element={<HistoriaClinica />} />
-                          <Route path="/historia-clinica/nueva/:pacienteId" element={<HistoriaClinicaForm />} />
-                          <Route path="/historia-clinica/:id" element={<HistoriaClinicaDetalle />} />
-                          <Route path="/historia-clinica/:id/editar" element={<HistoriaClinicaForm />} />
-                          
-                          {/* Ruta por defecto */}
-                          <Route path="*" element={<Navigate to="/" replace />} />
-                        </Routes>
-                      </div>
-                    </ProtectedRoute>
-                  }
-                />
-              </Routes>
+              <div className="min-vh-100 bg-light">
+                <Navbar />
+                <Routes>
+                  {/* Rutas Públicas */}
+                  <Route path="/" element={<Home />} />
+                  <Route path="/login" element={<Login />} />
+                  
+                  {/* Rutas protegidas */}
+                  <Route path="/pacientes" element={<ProtectedRoute><Pacientes /></ProtectedRoute>} />
+                  <Route path="/pacientes/nuevo" element={<ProtectedRoute><PacienteForm /></ProtectedRoute>} />
+                  <Route path="/pacientes/:id" element={<ProtectedRoute><PacienteDetalle /></ProtectedRoute>} />
+                  <Route path="/pacientes/:id/editar" element={<ProtectedRoute><PacienteForm /></ProtectedRoute>} />
+                  
+                  <Route path="/consultas" element={<ProtectedRoute><Consultas /></ProtectedRoute>} />
+                  <Route path="/consultas/nueva" element={<ProtectedRoute><ConsultaForm /></ProtectedRoute>} />
+                  <Route path="/consultas/:id" element={<ProtectedRoute><ConsultaDetalle /></ProtectedRoute>} />
+                  <Route path="/consultas/:id/editar" element={<ProtectedRoute><ConsultaForm /></ProtectedRoute>} />
+                  
+                  <Route path="/turnos" element={<ProtectedRoute><Turnos /></ProtectedRoute>} />
+                  <Route path="/turnos/nuevo" element={<ProtectedRoute><TurnoForm /></ProtectedRoute>} />
+                  <Route path="/turnos/:id/editar" element={<ProtectedRoute><TurnoForm /></ProtectedRoute>} />
+                  
+                  <Route path="/historia-clinica" element={<ProtectedRoute><HistoriaClinica /></ProtectedRoute>} />
+                  <Route path="/historia-clinica/nueva/:pacienteId" element={<ProtectedRoute><HistoriaClinicaForm /></ProtectedRoute>} />
+                  <Route path="/historia-clinica/:id" element={<ProtectedRoute><HistoriaClinicaDetalle /></ProtectedRoute>} />
+                  <Route path="/historia-clinica/:id/editar" element={<ProtectedRoute><HistoriaClinicaForm /></ProtectedRoute>} />
+                  
+                  {/* Ruta por defecto */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </div>
               </HistoriaClinicaProvider>
             </TurnosProvider>
           </ConsultasProvider>

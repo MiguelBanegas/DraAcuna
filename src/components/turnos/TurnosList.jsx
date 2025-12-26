@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTurnos } from '../../context/TurnosContext';
 import { usePacientes } from '../../context/PacientesContext';
 import Swal from 'sweetalert2';
+import CalendarView from '../layout/CalendarView';
 
 const TurnosList = () => {
   const navigate = useNavigate();
@@ -137,6 +138,11 @@ const TurnosList = () => {
           </div>
         </Col>
       </Row>
+
+      <div className="mb-5">
+        <h4 className="mb-3 text-muted">Agenda Mensual</h4>
+        <CalendarView />
+      </div>
 
       {/* Filtros */}
       <Card className="mb-3">
