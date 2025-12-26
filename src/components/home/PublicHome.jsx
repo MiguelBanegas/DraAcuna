@@ -30,6 +30,19 @@ const PublicHome = () => {
                 <h1 className="display-2 fw-bold mb-3 text-dark">
                   Dra. <span className="text-gradient">Acuña</span>
                 </h1>
+                
+                {/* Electrocardiograma animado */}
+                <div className="mb-4 d-flex justify-content-center">
+                  <svg viewBox="0 0 128 64" style={{ width: '200px', height: 'auto', color: '#0d6efd' }}>
+                    <style>{`
+                      .ecg-back { fill: none; stroke: currentColor; opacity: 0.1; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+                      .ecg-front { fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 260; stroke-dashoffset: 0; animation: ecg-dash 1.4s linear infinite; }
+                      @keyframes ecg-dash { 0% { stroke-dashoffset: 260; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0.5; } }
+                    `}</style>
+                    <polyline points="0,45.486 38.514,45.486 44.595,33.324 50.676,45.486 57.771,45.486 62.838,55.622 71.959,9 80.067,63.729 84.122,45.486 97.297,45.486 103.379,40.419 110.473,45.486 150,45.486" className="ecg-back"/>
+                    <polyline points="0,45.486 38.514,45.486 44.595,33.324 50.676,45.486 57.771,45.486 62.838,55.622 71.959,9 80.067,63.729 84.122,45.486 97.297,45.486 103.379,40.419 110.473,45.486 150,45.486" className="ecg-front"/>
+                  </svg>
+                </div>
                 <p className="lead text-dark fs-4 mb-5 mx-auto" style={{ maxWidth: '700px' }}>
                   Comprometida con su bienestar a través de una medicina integral, 
                   tecnología de vanguardia y un trato humano excepcional.
@@ -120,7 +133,15 @@ const PublicHome = () => {
       <footer className="py-5 bg-white text-center">
         <Container>
           <div className="mb-4">
-            <FaClinicMedical size={40} className="text-primary opacity-50" />
+            <svg viewBox="0 0 128 64" style={{ width: '150px', height: 'auto', color: '#0d6efd', opacity: 0.4 }}>
+              <style>{`
+                .ecg-back-footer { fill: none; stroke: currentColor; opacity: 0.1; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+                .ecg-front-footer { fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 260; stroke-dashoffset: 0; animation: ecg-dash-footer 1.4s linear infinite; }
+                @keyframes ecg-dash-footer { 0% { stroke-dashoffset: 260; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0.5; } }
+              `}</style>
+              <polyline points="0,45.486 38.514,45.486 44.595,33.324 50.676,45.486 57.771,45.486 62.838,55.622 71.959,9 80.067,63.729 84.122,45.486 97.297,45.486 103.379,40.419 110.473,45.486 150,45.486" className="ecg-back-footer"/>
+              <polyline points="0,45.486 38.514,45.486 44.595,33.324 50.676,45.486 57.771,45.486 62.838,55.622 71.959,9 80.067,63.729 84.122,45.486 97.297,45.486 103.379,40.419 110.473,45.486 150,45.486" className="ecg-front-footer"/>
+            </svg>
           </div>
           <p className="mb-0 text-secondary small">© {new Date().getFullYear()} Consultorio Dra. Acuña. Gestión Médica Profesional.</p>
         </Container>

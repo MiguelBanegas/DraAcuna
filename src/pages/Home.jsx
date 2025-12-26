@@ -49,7 +49,20 @@ const Home = () => {
         <Row className="align-items-center position-relative" style={{ zIndex: 1 }}>
           <Col md={8}>
             <h1 className="display-5 fw-bold mb-2 text-white">¡Bienvenida, Dra. Acuña!</h1>
-            <p className="lead mb-0 opacity-75">Panel de gestión integral de su consultorio médico.</p>
+            <p className="lead mb-3 opacity-75">Panel de gestión integral de su consultorio médico.</p>
+            
+            {/* Electrocardiograma animado */}
+            <div className="mb-0">
+              <svg viewBox="0 0 128 64" style={{ width: '180px', height: 'auto', color: 'white', opacity: 0.6 }}>
+                <style>{`
+                  .ecg-back-dash { fill: none; stroke: currentColor; opacity: 0.2; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+                  .ecg-front-dash { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 260; stroke-dashoffset: 0; animation: ecg-dash-dashboard 1.4s linear infinite; }
+                  @keyframes ecg-dash-dashboard { 0% { stroke-dashoffset: 260; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0.6; } }
+                `}</style>
+                <polyline points="0,45.486 38.514,45.486 44.595,33.324 50.676,45.486 57.771,45.486 62.838,55.622 71.959,9 80.067,63.729 84.122,45.486 97.297,45.486 103.379,40.419 110.473,45.486 150,45.486" className="ecg-back-dash"/>
+                <polyline points="0,45.486 38.514,45.486 44.595,33.324 50.676,45.486 57.771,45.486 62.838,55.622 71.959,9 80.067,63.729 84.122,45.486 97.297,45.486 103.379,40.419 110.473,45.486 150,45.486" className="ecg-front-dash"/>
+              </svg>
+            </div>
           </Col>
           <Col md={4} className="text-md-end mt-3 mt-md-0">
             <Badge bg="light" text="dark" className="fs-6 py-2 px-3 shadow-sm border-0">
