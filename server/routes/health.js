@@ -4,7 +4,7 @@ import path from "path";
 
 const router = express.Router();
 
-router.get("/health", (req, res) => {
+router.get("/", (req, res) => {
   const deployInfoPath = path.resolve("deploy-info.json");
 
   let deployInfo = null;
