@@ -31,13 +31,13 @@ const CalendarView = () => {
   return (
     <>
       <Row className="mb-4">
-        <Col md={4} className="mb-3 mb-md-0">
+        <Col xs={12} md={6} lg={4} className="mb-3 mb-lg-0">
           <MiniCalendar year={prevYear} month={prevMonth} onDayClick={handleDayClick} />
         </Col>
-        <Col md={4} className="mb-3 mb-md-0">
+        <Col xs={12} md={6} lg={4} className="mb-3 mb-lg-0">
           <MiniCalendar year={currentYear} month={currentMonth} onDayClick={handleDayClick} />
         </Col>
-        <Col md={4}>
+        <Col xs={12} md={12} lg={4}>
           <MiniCalendar year={nextYear} month={nextMonth} onDayClick={handleDayClick} />
         </Col>
       </Row>
