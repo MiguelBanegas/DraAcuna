@@ -4,7 +4,10 @@ import { PacientesProvider } from './context/PacientesContext';
 import { ConsultasProvider } from './context/ConsultasContext';
 import { TurnosProvider } from './context/TurnosContext';
 import { HistoriaClinicaProvider } from './context/HistoriaClinicaContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import ProtectedRoute from './components/layout/ProtectedRoute';
+import UpdateNotifier from './components/layout/UpdateNotifier';
 import Navbar from './components/layout/Navbar';
 import Login from './pages/Login';
 import Home from './pages/Home';
@@ -30,6 +33,8 @@ function App() {
               <HistoriaClinicaProvider>
               <div className="min-vh-100 bg-light">
                 <Navbar />
+                <UpdateNotifier />
+                <ToastContainer />
                 <Routes>
                   {/* Rutas Públicas */}
                   <Route path="/" element={<Home />} />
