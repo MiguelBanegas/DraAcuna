@@ -52,18 +52,15 @@ const Login = () => {
 
     setLoading(true);
 
-    // Simular delay de autenticación
-    setTimeout(() => {
-      const result = login(formData.username, formData.password);
-      
-      if (result.success) {
-        const from = location.state?.from?.pathname || '/';
-        navigate(from, { replace: true });
-      } else {
-        setError(result.error);
-      }
-      setLoading(false);
-    }, 500);
+    const result = await login(formData.username, formData.password);
+
+    if (result.success) {
+      const from = location.state?.from?.pathname || '/';
+      navigate(from, { replace: true });
+    } else {
+      setError(result.error);
+    }
+    setLoading(false);
   };
 
   return (

@@ -56,7 +56,7 @@ const Navbar = () => {
             {user ? (
               <>
                 <span className="navbar-text text-white me-3">
-                  {user.name}
+                  {user.nombre || user.name}
                 </span>
                 <Button variant="outline-light" size="sm" onClick={handleLogout}>
                   <FaSignOutAlt className="me-1" />

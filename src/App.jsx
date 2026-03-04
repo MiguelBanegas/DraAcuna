@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import UpdateNotifier from './components/layout/UpdateNotifier';
 import Navbar from './components/layout/Navbar';
+import DoctorChatModal from './components/layout/DoctorChatModal';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Pacientes from './pages/Pacientes';
@@ -33,6 +34,7 @@ function App() {
               <HistoriaClinicaProvider>
               <div className="min-vh-100 bg-light">
                 <Navbar />
+                <DoctorChatModal />
                 <UpdateNotifier />
                 <ToastContainer />
                 <Routes>

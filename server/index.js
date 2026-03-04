@@ -25,6 +25,7 @@ import consultasRoutes from "./routes/consultasRoutes.js";
 import turnosRoutes from "./routes/turnosRoutes.js";
 import historiaClinicaRoutes from "./routes/historiaClinicaRoutes.js";
 import healthRouter from "./routes/health.js";
+import chatRoutes from "./routes/chatRoutes.js";
 
 // Usar Rutas
 app.use("/api/auth", authRoutes);
@@ -33,6 +34,7 @@ app.use("/api/consultas", consultasRoutes);
 app.use("/api/turnos", turnosRoutes);
 app.use("/api/historia-clinica", historiaClinicaRoutes);
 app.use("/api/health", healthRouter);
+app.use("/api/chat", chatRoutes);
 
 
 // Iniciar servidor
