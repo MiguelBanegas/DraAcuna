@@ -19,6 +19,7 @@ describe('DoctorChatModal', () => {
     render(<DoctorChatModal />);
 
     const mensajesBox = await screen.findByTestId('chat-mensajes');
+    const input = screen.getByPlaceholderText(/Escrib/i);
 
     Object.defineProperty(mensajesBox, 'scrollHeight', {
       value: 500,
@@ -30,7 +31,7 @@ describe('DoctorChatModal', () => {
       configurable: true,
     });
 
-    fireEvent.change(screen.getByPlaceholderText(/Escrib/i), {
+    fireEvent.change(input, {
       target: { value: 'Hola' },
     });
     fireEvent.submit(screen.getByRole('button', { name: /Enviar/i }));
@@ -41,6 +42,10 @@ describe('DoctorChatModal', () => {
 
     await waitFor(() => {
       expect(mensajesBox.scrollTop).toBe(500);
+    });
+
+    await waitFor(() => {
+      expect(input).toHaveFocus();
     });
   });
 });
