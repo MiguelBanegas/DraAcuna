@@ -29,6 +29,11 @@ const DoctorChatModal = () => {
   const [mensajes, setMensajes] = useState([mensajeInicial]);
   const estabaLogueadaRef = useRef(false);
   const mensajesRef = useRef(null);
+  const inputRef = useRef(null);
+  const [pos, setPos] = useState({ x: null, y: null });
+  const draggingRef = useRef(false);
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
+  const dragStartPosRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const logueada = Boolean(user);
@@ -54,6 +59,54 @@ const DoctorChatModal = () => {
     mensajesRef.current.scrollTop = mensajesRef.current.scrollHeight;
   }, [mensajes, open]);
 
+  useEffect(() => {
+    if (!open) return;
+    inputRef.current?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    const handleMouseMove = (event) => {
+      if (!draggingRef.current) return;
+      const newX = event.clientX - dragOffsetRef.current.x;
+      const newY = event.clientY - dragOffsetRef.current.y;
+      setPos({
+        x: Math.max(8, Math.min(newX, window.innerWidth - 260)),
+        y: Math.max(8, Math.min(newY, window.innerHeight - 120)),
+      });
+    };
+
+    const handleMouseUp = () => {
+      if (!draggingRef.current) return;
+      draggingRef.current = false;
+      document.body.style.userSelect = "";
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
+  const startDrag = (event) => {
+    draggingRef.current = true;
+    document.body.style.userSelect = "none";
+
+    const rect = event.currentTarget.closest("[data-chat-window]")?.getBoundingClientRect();
+    const startX = rect ? rect.left : event.clientX;
+    const startY = rect ? rect.top : event.clientY;
+    dragStartPosRef.current = { x: startX, y: startY };
+    dragOffsetRef.current = {
+      x: event.clientX - startX,
+      y: event.clientY - startY,
+    };
+
+    if (pos.x === null || pos.y === null) {
+      setPos({ x: startX, y: startY });
+    }
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
     const texto = mensaje.trim();
@@ -73,6 +126,7 @@ const DoctorChatModal = () => {
       ]);
     } finally {
       setEnviando(false);
+      inputRef.current?.focus();
     }
   };
 
@@ -82,8 +136,10 @@ const DoctorChatModal = () => {
     <div
       style={{
         position: "fixed",
-        right: "24px",
-        bottom: "24px",
+        right: pos.x === null ? "24px" : "auto",
+        bottom: pos.y === null ? "24px" : "auto",
+        left: pos.x === null ? "auto" : `${pos.x}px`,
+        top: pos.y === null ? "auto" : `${pos.y}px`,
         zIndex: 1060,
       }}
     >
@@ -99,11 +155,20 @@ const DoctorChatModal = () => {
 
       {open && (
         <div
+          data-chat-window
           className="bg-white border rounded-4 shadow-lg"
-          style={{ width: "320px", overflow: "hidden" }}
+          style={{
+            width: "320px",
+            minWidth: "260px",
+            maxWidth: "90vw",
+            resize: "both",
+            overflow: "hidden",
+          }}
         >
           <div
             className="d-flex align-items-center justify-content-between px-3 py-2 bg-primary text-white"
+            style={{ cursor: "move" }}
+            onMouseDown={startDrag}
           >
             <strong>Chat de asistencia</strong>
             <Button
@@ -137,13 +202,14 @@ const DoctorChatModal = () => {
           <div className="p-3">
             <Form onSubmit={onSubmit}>
               <Form.Group className="mb-2">
-                <Form.Control
-                  type="text"
-                  placeholder="Escribí un mensaje..."
-                  value={mensaje}
-                  onChange={(e) => setMensaje(e.target.value)}
-                  disabled={enviando}
-                />
+              <Form.Control
+                type="text"
+                placeholder="Escribí un mensaje..."
+                value={mensaje}
+                onChange={(e) => setMensaje(e.target.value)}
+                disabled={enviando}
+                ref={inputRef}
+              />
               </Form.Group>
               <Button type="submit" disabled={enviando || !mensaje.trim()}>
                 {enviando ? "Enviando..." : "Enviar"}
