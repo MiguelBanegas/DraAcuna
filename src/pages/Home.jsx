@@ -5,6 +5,7 @@ import { usePacientes } from '../context/PacientesContext';
 import { useTurnos } from '../context/TurnosContext';
 import { useAuth } from '../context/AuthContext';
 import PublicHome from '../components/home/PublicHome';
+import DoctorChatModal from '../components/layout/DoctorChatModal';
 
 const Home = () => {
   const { isAuthenticated } = useAuth();
@@ -208,6 +209,7 @@ const Home = () => {
           </Card>
         </Col>
       </Row>
+      <DoctorChatModal />
     </Container>
   );
 };

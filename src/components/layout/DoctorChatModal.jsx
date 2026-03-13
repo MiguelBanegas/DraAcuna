@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Modal, Button, Form } from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
 import { useAuth } from "../../context/AuthContext";
 import { enviarMensaje } from "../../services/chatService";
 
@@ -23,29 +23,36 @@ const esDoctora = (user) => {
 
 const DoctorChatModal = () => {
   const { user } = useAuth();
-  const [show, setShow] = useState(false);
+  const [open, setOpen] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [mensajes, setMensajes] = useState([mensajeInicial]);
   const estabaLogueadaRef = useRef(false);
+  const mensajesRef = useRef(null);
 
   useEffect(() => {
     const logueada = Boolean(user);
 
     if (logueada && !estabaLogueadaRef.current && esDoctora(user)) {
-      setShow(true);
+      setOpen(true);
       setMensajes([mensajeInicial]);
       setMensaje("");
     }
 
     if (!logueada) {
-      setShow(false);
+      setOpen(false);
       setMensajes([mensajeInicial]);
       setMensaje("");
     }
 
     estabaLogueadaRef.current = logueada;
   }, [user]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (!mensajesRef.current) return;
+    mensajesRef.current.scrollTop = mensajesRef.current.scrollHeight;
+  }, [mensajes, open]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -69,40 +76,83 @@ const DoctorChatModal = () => {
     }
   };
 
-  return (
-    <Modal show={show} onHide={() => setShow(false)} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Chat de asistencia</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div
-          className="border rounded p-2 mb-3"
-          style={{ maxHeight: "260px", overflowY: "auto" }}
-        >
-          {mensajes.map((item, idx) => (
-            <div key={`${item.rol}-${idx}`} className="mb-2">
-              <strong>{item.rol === "user" ? "Vos" : "Asistente"}:</strong>{" "}
-              {item.texto}
-            </div>
-          ))}
-        </div>
+  if (!esDoctora(user)) return null;
 
-        <Form onSubmit={onSubmit}>
-          <Form.Group className="mb-2">
-            <Form.Control
-              type="text"
-              placeholder="Escribí un mensaje..."
-              value={mensaje}
-              onChange={(e) => setMensaje(e.target.value)}
-              disabled={enviando}
-            />
-          </Form.Group>
-          <Button type="submit" disabled={enviando || !mensaje.trim()}>
-            {enviando ? "Enviando..." : "Enviar"}
-          </Button>
-        </Form>
-      </Modal.Body>
-    </Modal>
+  return (
+    <div
+      style={{
+        position: "fixed",
+        right: "24px",
+        bottom: "24px",
+        zIndex: 1060,
+      }}
+    >
+      {!open && (
+        <Button
+          variant="primary"
+          onClick={() => setOpen(true)}
+          style={{ boxShadow: "0 8px 20px rgba(0,0,0,0.15)" }}
+        >
+          Chat de asistencia
+        </Button>
+      )}
+
+      {open && (
+        <div
+          className="bg-white border rounded-4 shadow-lg"
+          style={{ width: "320px", overflow: "hidden" }}
+        >
+          <div
+            className="d-flex align-items-center justify-content-between px-3 py-2 bg-primary text-white"
+          >
+            <strong>Chat de asistencia</strong>
+            <Button
+              variant="light"
+              size="sm"
+              onClick={() => setOpen(false)}
+              style={{ lineHeight: 1 }}
+            >
+              x
+            </Button>
+          </div>
+          <div
+            ref={mensajesRef}
+            data-testid="chat-mensajes"
+            className="p-3 border-bottom"
+            style={{
+              height: "260px",
+              minHeight: "160px",
+              maxHeight: "70vh",
+              overflowY: "auto",
+              resize: "vertical",
+            }}
+          >
+            {mensajes.map((item, idx) => (
+              <div key={`${item.rol}-${idx}`} className="mb-2">
+                <strong>{item.rol === "user" ? "Vos" : "Asistente"}:</strong>{" "}
+                {item.texto}
+              </div>
+            ))}
+          </div>
+          <div className="p-3">
+            <Form onSubmit={onSubmit}>
+              <Form.Group className="mb-2">
+                <Form.Control
+                  type="text"
+                  placeholder="Escribí un mensaje..."
+                  value={mensaje}
+                  onChange={(e) => setMensaje(e.target.value)}
+                  disabled={enviando}
+                />
+              </Form.Group>
+              <Button type="submit" disabled={enviando || !mensaje.trim()}>
+                {enviando ? "Enviando..." : "Enviar"}
+              </Button>
+            </Form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
