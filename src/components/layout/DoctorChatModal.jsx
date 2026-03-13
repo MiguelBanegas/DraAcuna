@@ -65,6 +65,11 @@ const DoctorChatModal = () => {
   }, [open]);
 
   useEffect(() => {
+    if (!open) return;
+    inputRef.current?.focus();
+  }, [mensajes, open]);
+
+  useEffect(() => {
     const handleMouseMove = (event) => {
       if (!draggingRef.current) return;
       const newX = event.clientX - dragOffsetRef.current.x;
@@ -126,7 +131,9 @@ const DoctorChatModal = () => {
       ]);
     } finally {
       setEnviando(false);
-      inputRef.current?.focus();
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
     }
   };
 
@@ -211,7 +218,11 @@ const DoctorChatModal = () => {
                 ref={inputRef}
               />
               </Form.Group>
-              <Button type="submit" disabled={enviando || !mensaje.trim()}>
+              <Button
+                type="submit"
+                disabled={enviando || !mensaje.trim()}
+                onMouseDown={(e) => e.preventDefault()}
+              >
                 {enviando ? "Enviando..." : "Enviar"}
               </Button>
             </Form>
