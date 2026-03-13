@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as pacientesService from '../services/pacientesService';
+import { matchTokensInFields, tokenizeSearch } from '../utils/search';
 
 const PacientesContext = createContext();
 
@@ -64,12 +65,12 @@ export const PacientesProvider = ({ children }) => {
   };
 
   const buscarPacientes = (term) => {
-    if (!term.trim()) {
+    const tokens = tokenizeSearch(term);
+    if (tokens.length === 0) {
       return pacientes;
     }
-    return pacientes.filter(p => 
-      p.nombreCompleto.toLowerCase().includes(term.toLowerCase()) ||
-      p.dni.includes(term)
+    return pacientes.filter((p) =>
+      matchTokensInFields(tokens, [p.nombreCompleto, p.dni])
     );
   };
 

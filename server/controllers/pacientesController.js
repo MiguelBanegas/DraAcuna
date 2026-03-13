@@ -1,5 +1,12 @@
 import * as db from "../db/index.js";
 
+const normalizeQuery = (text) =>
+  String(text || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
 // Obtener todos los pacientes
 export const getAllPacientes = async (req, res) => {
   try {
@@ -7,12 +14,27 @@ export const getAllPacientes = async (req, res) => {
     // Si se proporciona un query `q`, buscar por nombre o DNI (ILIKE para case-insensitive)
     if (q) {
       const max = Math.min(parseInt(limit, 10) || 50, 200);
-      const search = `%${q}%`;
-      const { rows } = await db.query(
-        `SELECT * FROM pacientes WHERE nombre_completo ILIKE $1 OR dni::text ILIKE $1 ORDER BY nombre_completo ASC LIMIT $2`,
-        [search, max]
-      );
-      return res.json(rows);
+      const tokens = normalizeQuery(q).split(/\s+/).filter(Boolean);
+      if (tokens.length > 0) {
+        const nombreExpr =
+          "translate(lower(coalesce(nombre_completo, '')), 'áéíóúüñ', 'aeiouun')";
+        const conditions = tokens
+          .map(
+            (_, idx) =>
+              `(${nombreExpr} LIKE $${idx + 1} OR lower(dni::text) LIKE $${idx + 1})`
+          )
+          .join(" AND ");
+        const values = tokens.map((token) => `%${token}%`);
+        values.push(max);
+
+        const { rows } = await db.query(
+          `SELECT * FROM pacientes WHERE ${conditions} ORDER BY nombre_completo ASC LIMIT $${
+            tokens.length + 1
+          }`,
+          values
+        );
+        return res.json(rows);
+      }
     }
 
     // Si no hay query, devolver todos (cuidado con volumen en producción)

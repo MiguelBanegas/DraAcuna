@@ -6,6 +6,7 @@ import { useTurnos } from '../../context/TurnosContext';
 import { usePacientes } from '../../context/PacientesContext';
 import Swal from 'sweetalert2';
 import CalendarView from '../layout/CalendarView';
+import { matchTokensInFields, tokenizeSearch } from '../../utils/search';
 
 const TurnosList = () => {
   const navigate = useNavigate();
@@ -29,11 +30,13 @@ const TurnosList = () => {
     const paciente = pacientes.find(p => p.id === turno.pacienteId);
     const nombrePaciente = paciente?.nombreCompleto || '';
     const dniPaciente = paciente?.dni || '';
-    
-    const cumpleBusqueda = searchTerm === '' || 
-      nombrePaciente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dniPaciente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      turno.motivo?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const tokens = tokenizeSearch(searchTerm);
+    const cumpleBusqueda = matchTokensInFields(tokens, [
+      nombrePaciente,
+      dniPaciente,
+      turno.motivo,
+    ]);
     
     // Comparar solo la fecha sin la hora
     let cumpleFecha = true;
