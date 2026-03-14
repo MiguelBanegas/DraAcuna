@@ -6,6 +6,7 @@ import { useHistoriaClinica } from '../../context/HistoriaClinicaContext';
 import { usePacientes } from '../../context/PacientesContext';
 import { useConsultas } from '../../context/ConsultasContext';
 import Swal from 'sweetalert2';
+import { calcularEdadDesdeFecha } from '../../utils/date';
 
 const HistoriaClinicaDetalle = () => {
   const { id } = useParams();
@@ -163,7 +164,7 @@ const HistoriaClinicaDetalle = () => {
                     <p className="mb-1"><strong>Nombre:</strong> {paciente.nombreCompleto}</p>
                     <div className="d-flex gap-3">
                       <p className="mb-1"><strong>DNI:</strong> {paciente.dni}</p>
-                      <p className="mb-1"><strong>Edad:</strong> {Math.floor((new Date() - new Date(paciente.fechaNacimiento)) / (365.25 * 24 * 60 * 60 * 1000))} años</p>
+                      <p className="mb-1"><strong>Edad:</strong> {calcularEdadDesdeFecha(paciente.fechaNacimiento)} años</p>
                     </div>
                     {paciente.obraSocial && (
                       <p className="mb-1"><strong>OS:</strong> {paciente.obraSocial}</p>

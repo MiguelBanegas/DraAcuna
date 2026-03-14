@@ -4,6 +4,7 @@ import { FaSearch, FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { usePacientes } from '../../context/PacientesContext';
 import Swal from 'sweetalert2';
+import { calcularEdadDesdeFecha } from '../../utils/date';
 
 const PacientesList = () => {
   const navigate = useNavigate();
@@ -70,15 +71,7 @@ const PacientesList = () => {
 
   // Calcular edad
   const calcularEdad = (fechaNacimiento) => {
-    if (!fechaNacimiento) return '-';
-    const hoy = new Date();
-    const nacimiento = new Date(fechaNacimiento);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const mes = hoy.getMonth() - nacimiento.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-      edad--;
-    }
-    return edad;
+    return calcularEdadDesdeFecha(fechaNacimiento);
   };
 
   // El sistema ahora no carga todos al inicio, solo muestra los filtrados
