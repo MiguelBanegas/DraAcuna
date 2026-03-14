@@ -5,6 +5,7 @@ import { FaEdit, FaArrowLeft, FaCalendarAlt, FaStethoscope, FaUser, FaPhone, FaE
 import { usePacientes } from '../../context/PacientesContext';
 import { useConsultas } from '../../context/ConsultasContext';
 import { useTurnos } from '../../context/TurnosContext';
+import { calcularEdadDesdeFecha, parseLocalDate } from '../../utils/date';
 
 const PacienteDetalle = () => {
   const { id } = useParams();
@@ -48,19 +49,13 @@ const PacienteDetalle = () => {
   }
 
   const calcularEdad = (fechaNacimiento) => {
-    if (!fechaNacimiento) return '-';
-    const hoy = new Date();
-    const nacimiento = new Date(fechaNacimiento);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const mes = hoy.getMonth() - nacimiento.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-      edad--;
-    }
-    return edad;
+    return calcularEdadDesdeFecha(fechaNacimiento);
   };
 
   const formatearFecha = (fecha) => {
-    return new Date(fecha).toLocaleDateString('es-AR', {
+    const parsed = parseLocalDate(fecha);
+    if (!parsed) return '-';
+    return parsed.toLocaleDateString('es-AR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'

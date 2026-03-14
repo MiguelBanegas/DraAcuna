@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FaSave, FaTimes } from 'react-icons/fa';
 import { usePacientes } from '../../context/PacientesContext';
 import Swal from 'sweetalert2';
+import { parseLocalDate } from '../../utils/date';
 
 const PacienteForm = () => {
   const navigate = useNavigate();
@@ -19,7 +20,8 @@ const PacienteForm = () => {
     email: '',
     direccion: '',
     obraSocial: '',
-    numeroAfiliado: ''
+    numeroAfiliado: '',
+    fechaCreacion: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -44,7 +46,8 @@ const PacienteForm = () => {
             email: paciente.email || '',
             direccion: paciente.direccion || '',
             obraSocial: paciente.obraSocial || '',
-            numeroAfiliado: paciente.numeroAfiliado || ''
+            numeroAfiliado: paciente.numeroAfiliado || '',
+            fechaCreacion: paciente.fechaCreacion || ''
           });
         });
       } else {
@@ -91,9 +94,11 @@ const PacienteForm = () => {
     if (!formData.fechaNacimiento) {
       newErrors.fechaNacimiento = 'La fecha de nacimiento es requerida';
     } else {
-      const fechaNac = new Date(formData.fechaNacimiento);
+      const fechaNac = parseLocalDate(formData.fechaNacimiento);
       const hoy = new Date();
-      if (fechaNac > hoy) {
+      if (!fechaNac) {
+        newErrors.fechaNacimiento = 'La fecha de nacimiento no es válida';
+      } else if (fechaNac > hoy) {
         newErrors.fechaNacimiento = 'La fecha de nacimiento no puede ser futura';
       }
     }
@@ -145,6 +150,19 @@ const PacienteForm = () => {
     }
   };
 
+  const formatearFechaHora = (fecha) => {
+    if (!fecha) return '-';
+    const parsed = new Date(fecha);
+    if (Number.isNaN(parsed.getTime())) return '-';
+    return parsed.toLocaleString('es-AR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <Container>
       <Row className="mb-4">
@@ -158,6 +176,20 @@ const PacienteForm = () => {
       <Card>
         <Card.Body>
           <Form onSubmit={handleSubmit}>
+            {isEditing && (
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Fecha registrada</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={formatearFechaHora(formData.fechaCreacion)}
+                      readOnly
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+            )}
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
