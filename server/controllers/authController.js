@@ -2,6 +2,13 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import * as db from "../db/index.js";
 
+const signAuthToken = (user) =>
+  jwt.sign(
+    { id: user.id, username: user.username, rol: user.rol },
+    process.env.JWT_SECRET || "secret_key_default",
+    { expiresIn: "24h" }
+  );
+
 // Login de usuario
 export const login = async (req, res) => {
   const { username, password } = req.body;
@@ -31,11 +38,7 @@ export const login = async (req, res) => {
     }
 
     // Generar Token JWT
-    const token = jwt.sign(
-      { id: usuario.id, username: usuario.username, rol: usuario.rol },
-      process.env.JWT_SECRET || "secret_key_default",
-      { expiresIn: "24h" }
-    );
+    const token = signAuthToken(usuario);
 
     res.json({
       message: "Login exitoso",
@@ -56,6 +59,12 @@ export const login = async (req, res) => {
 // Registro de usuario (para crear el primer admin)
 export const register = async (req, res) => {
   const { username, password, nombre, email, rol } = req.body;
+
+  if (!username || !password || !nombre) {
+    return res.status(400).json({
+      error: "Nombre, usuario y contraseña son obligatorios",
+    });
+  }
 
   try {
     // Hash de la contraseña
@@ -82,6 +91,74 @@ export const register = async (req, res) => {
         .json({ error: "El nombre de usuario o email ya existe" });
     }
     res.status(500).json({ error: "Error al crear el usuario" });
+  }
+};
+
+export const listUsers = async (_req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT id, username, nombre, email, rol
+       FROM usuarios
+       ORDER BY nombre ASC, username ASC`
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("Error en listUsers:", error);
+    res.status(500).json({ error: "Error al obtener usuarios" });
+  }
+};
+
+export const adminResetCredentials = async (req, res) => {
+  const { id } = req.params;
+  const { username, password } = req.body;
+  const nextUsername = String(username || "").trim();
+  const nextPassword = String(password || "");
+
+  if (!nextUsername || !nextPassword) {
+    return res.status(400).json({
+      error: "Usuario y nueva contraseña son obligatorios",
+    });
+  }
+
+  if (nextPassword.length < 6) {
+    return res.status(400).json({
+      error: "La nueva contraseña debe tener al menos 6 caracteres",
+    });
+  }
+
+  try {
+    const { rows } = await db.query("SELECT * FROM usuarios WHERE id = $1", [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const duplicate = await db.query(
+      "SELECT id FROM usuarios WHERE username = $1 AND id <> $2",
+      [nextUsername, id]
+    );
+
+    if (duplicate.rows.length > 0) {
+      return res.status(400).json({ error: "El nombre de usuario ya está en uso" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(nextPassword, salt);
+
+    const { rows: updatedRows } = await db.query(
+      `UPDATE usuarios
+       SET username = $1, password_hash = $2
+       WHERE id = $3
+       RETURNING id, username, nombre, email, rol`,
+      [nextUsername, passwordHash, id]
+    );
+
+    res.json({
+      message: "Credenciales restablecidas correctamente",
+      user: updatedRows[0],
+    });
+  } catch (error) {
+    console.error("Error en adminResetCredentials:", error);
+    res.status(500).json({ error: "Error al restablecer credenciales" });
   }
 };
 
@@ -158,15 +235,7 @@ export const updateCredentials = async (req, res) => {
     );
 
     const updatedUser = updatedRows[0];
-    const token = jwt.sign(
-      {
-        id: updatedUser.id,
-        username: updatedUser.username,
-        rol: updatedUser.rol,
-      },
-      process.env.JWT_SECRET || "secret_key_default",
-      { expiresIn: "24h" }
-    );
+    const token = signAuthToken(updatedUser);
 
     res.json({
       message: "Credenciales actualizadas correctamente",

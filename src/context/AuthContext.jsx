@@ -134,6 +134,69 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const getAuthHeaders = () => ({
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  });
+
+  const getUsers = async () => {
+    try {
+      const response = await fetch(`${API_URL}/auth/users`, {
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true, users: data };
+      }
+
+      return { success: false, error: data.error || 'No se pudieron obtener los usuarios' };
+    } catch (error) {
+      console.error('Error al obtener usuarios:', error);
+      return { success: false, error: 'No se pudo conectar con el servidor' };
+    }
+  };
+
+  const createUser = async ({ username, password, nombre, email, rol }) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ username, password, nombre, email, rol }),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true, user: data.user };
+      }
+
+      return { success: false, error: data.error || 'No se pudo crear el usuario' };
+    } catch (error) {
+      console.error('Error al crear usuario:', error);
+      return { success: false, error: 'No se pudo conectar con el servidor' };
+    }
+  };
+
+  const adminResetUserCredentials = async ({ userId, username, password }) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/users/${userId}/reset-credentials`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true, user: data.user };
+      }
+
+      return { success: false, error: data.error || 'No se pudieron restablecer las credenciales' };
+    } catch (error) {
+      console.error('Error al restablecer credenciales de usuario:', error);
+      return { success: false, error: 'No se pudo conectar con el servidor' };
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -145,13 +208,21 @@ export const AuthProvider = ({ children }) => {
     return user !== null && token !== null;
   };
 
+  const isAdmin = () => {
+    return String(user?.rol || '').toLowerCase() === 'admin';
+  };
+
   const value = {
     user,
     token,
     login,
     updateCredentials,
+    getUsers,
+    createUser,
+    adminResetUserCredentials,
     logout,
     isAuthenticated,
+    isAdmin,
     loading
   };
 

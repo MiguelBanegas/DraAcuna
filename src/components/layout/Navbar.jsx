@@ -5,7 +5,7 @@ import { FaUserMd, FaUsers, FaStethoscope, FaCalendarAlt, FaSignOutAlt, FaFileMe
 import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
 
@@ -49,6 +49,12 @@ const Navbar = () => {
                   <FaUser className="me-1" />
                   Mi Cuenta
                 </Nav.Link>
+                {isAdmin() && (
+                  <Nav.Link as={Link} to="/usuarios">
+                    <FaUser className="me-1" />
+                    Usuarios
+                  </Nav.Link>
+                )}
                 <Nav.Link href="https://ar.prvademecum.com/" target="_blank" rel="noopener noreferrer">
                   <FaBook className="me-1" />
                   Vademécum
