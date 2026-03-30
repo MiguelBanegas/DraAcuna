@@ -1,6 +1,7 @@
 import { Container, Row, Col, Card, Button, Badge } from 'react-bootstrap';
 import { FaStethoscope, FaMapMarkerAlt, FaClock, FaPhoneAlt, FaUserMd, FaHeartbeat, FaCalendarCheck, FaClinicMedical, FaMedkit, FaMicroscope } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import AppVersionBadge from '../layout/AppVersionBadge';
 
 const PublicHome = () => {
   return (
@@ -27,6 +28,9 @@ const PublicHome = () => {
                 <Badge bg="primary" className="mb-3 px-3 py-2 rounded-pill text-uppercase ls-1 fw-bold">
                   Atención Médica de Excelencia
                 </Badge>
+                <div className="mb-3">
+                  <AppVersionBadge bg="light" text="dark" className="px-3 py-2 shadow-sm" />
+                </div>
                 <h1 className="display-2 fw-bold mb-3 text-dark">
                   Dra. <span className="text-gradient">Acuña</span>
                 </h1>
