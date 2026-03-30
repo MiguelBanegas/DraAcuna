@@ -19,7 +19,7 @@ const Navbar = () => {
       <Container>
         <BSNavbar.Brand as={Link} to="/" onClick={() => setExpanded(false)}>
           <FaUserMd className="me-2" />
-          Consultorio Dra Acuña
+          Consultorio Dra. Ana Acuña
         </BSNavbar.Brand>
         <BSNavbar.Toggle aria-controls="basic-navbar-nav" />
         <BSNavbar.Collapse id="basic-navbar-nav" onClick={() => setExpanded(false)}>

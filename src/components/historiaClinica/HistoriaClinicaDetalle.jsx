@@ -23,7 +23,7 @@ const HistoriaClinicaDetalle = () => {
 
   // Datos del médico
   const medicoData = {
-    nombre: 'Dra. Acuña',
+    nombre: 'Dra. Ana Acuña',
     matricula: 'MP 12345' // Puedes cambiar este número
   };
 
