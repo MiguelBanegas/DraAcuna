@@ -32,7 +32,7 @@ const PublicHome = () => {
                   <AppVersionBadge bg="light" text="dark" className="px-3 py-2 shadow-sm" />
                 </div>
                 <h1 className="display-2 fw-bold mb-3 text-dark">
-                  Dra. <span className="text-gradient">Acuña</span>
+                  Dra. <span className="text-gradient">Ana Acuña</span>
                 </h1>
                 
                 {/* Electrocardiograma animado */}
