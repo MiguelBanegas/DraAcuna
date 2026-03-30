@@ -81,6 +81,12 @@ body {
   box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
+.placeholder-subtle::placeholder {
+  color: #6c757d;
+  opacity: 0.55;
+  font-style: italic;
+}
+
 /* Badges */
 .badge {
   padding: 0.35em 0.65em;

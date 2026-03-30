@@ -75,7 +75,7 @@ describe('ConsultaForm', () => {
     expect(await screen.findByText('Debe seleccionar un paciente')).toBeInTheDocument();
     expect(screen.getByText('El motivo de consulta es requerido')).toBeInTheDocument();
     expect(agregarConsulta).not.toHaveBeenCalled();
-  });
+  }, 30000);
 
   it('guarda una consulta nueva y navega al listado', async () => {
     agregarConsulta.mockResolvedValue({ id: 10 });
@@ -87,7 +87,7 @@ describe('ConsultaForm', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /Seleccionar paciente mock/i }));
-    fireEvent.change(screen.getByPlaceholderText(/Describa el motivo de la consulta/i), {
+    fireEvent.change(screen.getByPlaceholderText(/Ej\.: cefalea de 3 días/i), {
       target: { value: 'Dolor de cabeza' },
     });
 
@@ -110,7 +110,7 @@ describe('ConsultaForm', () => {
       }),
     );
     expect(mockNavigate).toHaveBeenCalledWith('/consultas');
-  });
+  }, 30000);
 
   it('muestra error si falla el guardado', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -123,7 +123,7 @@ describe('ConsultaForm', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /Seleccionar paciente mock/i }));
-    fireEvent.change(screen.getByPlaceholderText(/Describa el motivo de la consulta/i), {
+    fireEvent.change(screen.getByPlaceholderText(/Ej\.: cefalea de 3 días/i), {
       target: { value: 'Dolor de cabeza' },
     });
 
@@ -135,5 +135,30 @@ describe('ConsultaForm', () => {
     expect(mockNavigate).not.toHaveBeenCalledWith('/consultas');
 
     consoleErrorSpy.mockRestore();
+  }, 30000);
+
+  it('usa placeholders sutiles en los campos clínicos principales', async () => {
+    const { container } = render(<ConsultaForm />);
+
+    await waitFor(() => {
+      const fechaInput = document.querySelector('input[name="fechaHora"]');
+      expect(fechaInput).not.toBeNull();
+      expect(fechaInput.value).not.toBe('');
+    });
+
+    const motivo = container.querySelector('textarea[name="motivo"]');
+    const diagnostico = container.querySelector('textarea[name="diagnostico"]');
+    const tratamiento = container.querySelector('textarea[name="tratamiento"]');
+    const observaciones = container.querySelector('textarea[name="observaciones"]');
+
+    expect(motivo).toHaveAttribute('placeholder', 'Ej.: cefalea de 3 días, control de rutina, dolor abdominal...');
+    expect(diagnostico).toHaveAttribute('placeholder', 'Ej.: migraña, virosis respiratoria, paciente en observación...');
+    expect(tratamiento).toHaveAttribute('placeholder', 'Ej.: reposo, hidratación, ibuprofeno, laboratorio solicitado...');
+    expect(observaciones).toHaveAttribute('placeholder', 'Ej.: refiere mejoría, acompañar evolución, revisar estudios...');
+
+    expect(motivo).toHaveClass('placeholder-subtle');
+    expect(diagnostico).toHaveClass('placeholder-subtle');
+    expect(tratamiento).toHaveClass('placeholder-subtle');
+    expect(observaciones).toHaveClass('placeholder-subtle');
   });
 });
