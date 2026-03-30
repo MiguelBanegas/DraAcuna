@@ -68,6 +68,7 @@ const TurnoForm = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
   const selectRef = useRef(null);
   const searchInputRef = useRef(null);
   const [pacienteOption, setPacienteOption] = useState(null);
@@ -196,11 +197,16 @@ const TurnoForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (submitting) {
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
 
     try {
+      setSubmitting(true);
       const turnoData = {
         ...formData,
         fechaHora: new Date(formData.fechaHora).toISOString(),
@@ -228,6 +234,8 @@ const TurnoForm = () => {
       } else {
         Swal.fire('Error', 'No se pudo guardar el turno. Por favor, intente nuevamente.', 'error');
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -264,6 +272,7 @@ const TurnoForm = () => {
                     placeholder="Buscar paciente por nombre o DNI..."
                     isClearable
                     isSearchable
+                    isDisabled={submitting}
                     noOptionsMessage={() => "No se encontraron pacientes"}
                     styles={{
                       control: (base, state) => ({
@@ -303,6 +312,7 @@ const TurnoForm = () => {
                     name="estado"
                     value={formData.estado}
                     onChange={handleChange}
+                    disabled={submitting}
                   >
                     <option value="pendiente">Pendiente</option>
                     <option value="confirmado">Confirmado</option>
@@ -332,6 +342,7 @@ const TurnoForm = () => {
                     value={formData.fechaHora}
                     onChange={handleChange}
                     isInvalid={!!errors.fechaHora}
+                    disabled={submitting}
                   />
                   <Form.Control.Feedback type="invalid">
                     {errors.fechaHora}
@@ -350,6 +361,7 @@ const TurnoForm = () => {
                     value={formData.duracion}
                     onChange={handleChange}
                     isInvalid={!!errors.duracion}
+                    disabled={submitting}
                   >
                     <option value="15">15 minutos</option>
                     <option value="30">30 minutos</option>
@@ -374,6 +386,7 @@ const TurnoForm = () => {
                 onChange={handleChange}
                 isInvalid={!!errors.motivo}
                 placeholder="Ej: Control de rutina, Consulta general, etc."
+                disabled={submitting}
               />
               <Form.Control.Feedback type="invalid">
                 {errors.motivo}
@@ -389,6 +402,7 @@ const TurnoForm = () => {
                 value={formData.observaciones}
                 onChange={handleChange}
                 placeholder="Observaciones adicionales sobre el turno..."
+                disabled={submitting}
               />
             </Form.Group>
 
@@ -396,13 +410,14 @@ const TurnoForm = () => {
               <Button 
                 variant="secondary" 
                 onClick={() => navigate('/turnos')}
+                disabled={submitting}
               >
                 <FaTimes className="me-2" />
                 Cancelar
               </Button>
-              <Button variant="primary" type="submit">
+              <Button variant="primary" type="submit" disabled={submitting}>
                 <FaSave className="me-2" />
-                {isEditing ? 'Actualizar' : 'Guardar'}
+                {submitting ? 'Guardando...' : isEditing ? 'Actualizar' : 'Guardar'}
               </Button>
             </div>
           </Form>

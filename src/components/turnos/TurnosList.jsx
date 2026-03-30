@@ -16,6 +16,7 @@ const TurnosList = () => {
   const [filtroFecha, setFiltroFecha] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('');
   const [filtroPaciente, setFiltroPaciente] = useState('');
+  const [pendingActionId, setPendingActionId] = useState(null);
   const searchInputRef = useRef(null);
 
   // Auto-focus en el campo de búsqueda al cargar el componente
@@ -63,6 +64,10 @@ const TurnosList = () => {
   }).sort((a, b) => new Date(a.fechaHora) - new Date(b.fechaHora)); // Ordenar por fecha
 
   const handleDelete = async (id, pacienteNombre) => {
+    if (pendingActionId !== null) {
+      return;
+    }
+
     const result = await Swal.fire({
       title: '¿Está seguro?',
       text: `Está por eliminar el turno de ${pacienteNombre}. Esta acción no se puede deshacer.`,
@@ -72,32 +77,48 @@ const TurnosList = () => {
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar',
-      reverseButtons: true
+      reverseButtons: true,
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => !Swal.isLoading(),
+      preConfirm: async () => {
+        setPendingActionId(id);
+        try {
+          await eliminarTurno(id);
+          return true;
+        } catch (error) {
+          console.error('Error al eliminar turno:', error);
+          Swal.showValidationMessage('No se pudo eliminar el turno');
+          setPendingActionId(null);
+          return false;
+        }
+      }
     });
 
     if (result.isConfirmed) {
-      try {
-        await eliminarTurno(id);
-        await Swal.fire({
-          title: 'Eliminado',
-          text: 'El turno ha sido eliminado correctamente.',
-          icon: 'success',
-          timer: 2000,
-          showConfirmButton: false
-        });
-      } catch (error) {
-        console.error('Error al eliminar turno:', error);
-        Swal.fire('Error', 'No se pudo eliminar el turno', 'error');
-      }
+      setPendingActionId(null);
+      await Swal.fire({
+        title: 'Eliminado',
+        text: 'El turno ha sido eliminado correctamente.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
     }
   };
 
   const handleCambiarEstado = async (id, nuevoEstado) => {
+    if (pendingActionId !== null) {
+      return;
+    }
+
     try {
+      setPendingActionId(id);
       await cambiarEstadoTurno(id, nuevoEstado);
     } catch (error) {
       console.error('Error al cambiar estado del turno:', error);
       Swal.fire('Error', 'No se pudo cambiar el estado del turno', 'error');
+    } finally {
+      setPendingActionId(null);
     }
   };
 
@@ -134,6 +155,7 @@ const TurnosList = () => {
             <Button 
               variant="primary" 
               onClick={() => navigate('/turnos/nuevo')}
+              disabled={pendingActionId !== null}
             >
               <FaPlus className="me-2" />
               Nuevo Turno
@@ -209,6 +231,7 @@ const TurnosList = () => {
                     setFiltroEstado('');
                     setFiltroPaciente('');
                   }}
+                  disabled={pendingActionId !== null}
                 >
                   Limpiar filtros
                 </Button>
@@ -239,6 +262,7 @@ const TurnosList = () => {
                 <Button 
                   variant="primary" 
                   onClick={() => navigate('/turnos/nuevo')}
+                  disabled={pendingActionId !== null}
                 >
                   <FaPlus className="me-2" />
                   Programar Primer Turno
@@ -262,6 +286,7 @@ const TurnosList = () => {
                   {turnosFiltrados.map((turno) => {
                     const paciente = pacientes.find(p => p.id === turno.pacienteId);
                     const IconoEstado = estadoIcono[turno.estado];
+                    const isPendingRow = pendingActionId === turno.id;
                     return (
                       <tr key={turno.id}>
                         <td>
@@ -294,6 +319,7 @@ const TurnosList = () => {
                                 size="sm"
                                 onClick={() => handleCambiarEstado(turno.id, 'confirmado')}
                                 title="Confirmar"
+                                disabled={pendingActionId !== null}
                               >
                                 <FaCheck />
                               </Button>
@@ -304,6 +330,7 @@ const TurnosList = () => {
                                 size="sm"
                                 onClick={() => handleCambiarEstado(turno.id, 'completado')}
                                 title="Marcar como completado"
+                                disabled={pendingActionId !== null}
                               >
                                 <FaCheck />
                               </Button>
@@ -313,6 +340,7 @@ const TurnosList = () => {
                               size="sm"
                               onClick={() => navigate(`/turnos/${turno.id}/editar`)}
                               title="Editar"
+                              disabled={pendingActionId !== null}
                             >
                               <FaEdit />
                             </Button>
@@ -327,8 +355,9 @@ const TurnosList = () => {
                                 }
                               }}
                               title={turno.estado !== 'cancelado' ? 'Cancelar' : 'Eliminar'}
+                              disabled={pendingActionId !== null}
                             >
-                              <FaTrash />
+                              {isPendingRow ? <FaClock /> : <FaTrash />}
                             </Button>
                           </div>
                         </td>
