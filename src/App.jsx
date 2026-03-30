@@ -23,6 +23,7 @@ import HistoriaClinica from './pages/HistoriaClinica';
 import HistoriaClinicaForm from './components/historiaClinica/HistoriaClinicaForm';
 import HistoriaClinicaDetalle from './components/historiaClinica/HistoriaClinicaDetalle';
 import Cuenta from './pages/Cuenta';
+import Usuarios from './pages/Usuarios';
 
 function App() {
   return (
@@ -61,6 +62,7 @@ function App() {
                   <Route path="/historia-clinica/:id" element={<ProtectedRoute><HistoriaClinicaDetalle /></ProtectedRoute>} />
                   <Route path="/historia-clinica/:id/editar" element={<ProtectedRoute><HistoriaClinicaForm /></ProtectedRoute>} />
                   <Route path="/cuenta" element={<ProtectedRoute><Cuenta /></ProtectedRoute>} />
+                  <Route path="/usuarios" element={<ProtectedRoute><Usuarios requireAdmin /></ProtectedRoute>} />
                   
                   {/* Ruta por defecto */}
                   <Route path="*" element={<Navigate to="/" replace />} />
