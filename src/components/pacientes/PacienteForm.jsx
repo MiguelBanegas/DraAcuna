@@ -44,7 +44,23 @@ const PacienteForm = () => {
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [pacienteExistentePorDni, setPacienteExistentePorDni] = useState(null);
   const firstInputRef = useRef(null);
+
+  const buscarPacientePorDni = (dniValue) => {
+    const normalizedDni = String(dniValue || '').trim();
+    if (!/^\d{7,8}$/.test(normalizedDni)) {
+      return null;
+    }
+
+    return (
+      pacientes.find(
+        (paciente) =>
+          String(paciente.dni).trim() === normalizedDni &&
+          String(paciente.id) !== String(id)
+      ) || null
+    );
+  };
 
   // Cargar datos si es edición
   useEffect(() => {
@@ -93,6 +109,30 @@ const PacienteForm = () => {
         [name]: ''
       }));
     }
+
+    if (name === 'dni') {
+      setPacienteExistentePorDni(null);
+    }
+  };
+
+  const handleDniBlur = () => {
+    const pacienteExistente = buscarPacientePorDni(formData.dni);
+    setPacienteExistentePorDni(pacienteExistente);
+
+    if (pacienteExistente) {
+      setErrors((prev) => ({
+        ...prev,
+        dni: 'Ya existe un paciente registrado con ese DNI',
+      }));
+      return;
+    }
+
+    if (errors.dni === 'Ya existe un paciente registrado con ese DNI') {
+      setErrors((prev) => ({
+        ...prev,
+        dni: '',
+      }));
+    }
   };
 
   const validateForm = () => {
@@ -106,6 +146,12 @@ const PacienteForm = () => {
       newErrors.dni = 'El DNI es requerido';
     } else if (!/^\d{7,8}$/.test(formData.dni.trim())) {
       newErrors.dni = 'El DNI debe tener 7 u 8 dígitos';
+    } else {
+      const pacienteExistente = buscarPacientePorDni(formData.dni);
+      if (pacienteExistente) {
+        newErrors.dni = 'Ya existe un paciente registrado con ese DNI';
+        setPacienteExistentePorDni(pacienteExistente);
+      }
     }
 
     if (!formData.fechaNacimiento) {
@@ -234,6 +280,7 @@ const PacienteForm = () => {
                     name="dni"
                     value={formData.dni}
                     onChange={handleChange}
+                    onBlur={handleDniBlur}
                     isInvalid={!!errors.dni}
                     placeholder="Ej: 12345678"
                     maxLength="8"
@@ -241,6 +288,11 @@ const PacienteForm = () => {
                   <Form.Control.Feedback type="invalid">
                     {errors.dni}
                   </Form.Control.Feedback>
+                  {pacienteExistentePorDni && (
+                    <Form.Text className="text-warning">
+                      Ya existe el paciente: <strong>{pacienteExistentePorDni.nombreCompleto}</strong>
+                    </Form.Text>
+                  )}
                 </Form.Group>
               </Col>
             </Row>

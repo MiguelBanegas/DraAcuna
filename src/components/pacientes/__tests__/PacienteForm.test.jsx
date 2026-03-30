@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import PacienteForm from '../PacienteForm';
 import { usePacientes } from '../../../context/PacientesContext';
@@ -57,5 +57,30 @@ describe('PacienteForm', () => {
       expect(fechaRegistradaInput).not.toHaveValue('-');
       expect(fechaRegistradaInput.value).toContain('2026');
     });
+  });
+
+  it('detecta un DNI existente al salir del campo y muestra el nombre del paciente', async () => {
+    mockParams.id = undefined;
+    usePacientes.mockReturnValue({
+      pacientes: [
+        {
+          id: 1,
+          nombreCompleto: 'Ana Perez',
+          dni: '12345678',
+        },
+      ],
+      agregarPaciente: vi.fn(),
+      actualizarPaciente: vi.fn(),
+    });
+
+    render(<PacienteForm />);
+
+    const dniInput = document.querySelector('input[name="dni"]');
+    fireEvent.change(dniInput, { target: { value: '12345678' } });
+    fireEvent.blur(dniInput);
+
+    expect(await screen.findByText('Ya existe un paciente registrado con ese DNI')).toBeInTheDocument();
+    expect(screen.getByText(/Ya existe el paciente:/i)).toBeInTheDocument();
+    expect(screen.getByText('Ana Perez')).toBeInTheDocument();
   });
 });
