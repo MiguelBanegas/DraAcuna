@@ -117,7 +117,7 @@ const HistoriaClinicaForm = () => {
         <Card className="mb-4 shadow-sm border-0">
           <Card.Body>
             <div className="text-center mb-4">
-              <h3 className="mb-1">CONSULTORIO MÉDICO - Dra. Acuña</h3>
+              <h3 className="mb-1">CONSULTORIO MÉDICO - Dra. Ana Acuña</h3>
               <p className="text-muted small">Resumen de Atención del Paciente</p>
             </div>
             
@@ -131,7 +131,7 @@ const HistoriaClinicaForm = () => {
               <Col md={6} className="text-md-end mt-3 mt-md-0">
                 <h6 className="text-uppercase text-muted small fw-bold">Información del Reporte</h6>
                 <p className="mb-1"><strong>Fecha Emisión:</strong> {new Date().toLocaleDateString('es-AR')}</p>
-                <p className="mb-0"><strong>Médico:</strong> Dra. Acuña</p>
+                <p className="mb-0"><strong>Médico:</strong> Dra. Ana Acuña</p>
               </Col>
             </Row>
           </Card.Body>
@@ -200,7 +200,7 @@ const HistoriaClinicaForm = () => {
         {/* Firma para la impresión */}
         <div className="print-only mt-5 pt-5 text-end" style={{ display: 'none' }}>
           <div className="d-inline-block text-center" style={{ borderTop: '1px solid black', minWidth: '200px', paddingTop: '5px' }}>
-            <strong>Dra. Acuña</strong><br />
+            <strong>Dra. Ana Acuña</strong><br />
             <span className="small">Médica - MP 12345</span>
           </div>
         </div>

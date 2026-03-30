@@ -50,7 +50,7 @@ const Home = () => {
         </div>
         <Row className="align-items-center position-relative" style={{ zIndex: 1 }}>
           <Col md={8}>
-            <h1 className="display-5 fw-bold mb-2 text-white">¡Bienvenida, Dra. Acuña!</h1>
+            <h1 className="display-5 fw-bold mb-2 text-white">¡Bienvenida, Dra. Ana Acuña!</h1>
             <p className="lead mb-3 opacity-75">Panel de gestión integral de su consultorio médico.</p>
             
             {/* Electrocardiograma animado */}
