@@ -106,6 +106,34 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateCredentials = async ({ currentPassword, newUsername, newPassword }) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/credentials`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ currentPassword, newUsername, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUser(data.user);
+        setToken(data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('token', data.token);
+        return { success: true, user: data.user };
+      }
+
+      return { success: false, error: data.error || 'No se pudieron actualizar las credenciales' };
+    } catch (error) {
+      console.error('Error al actualizar credenciales:', error);
+      return { success: false, error: 'No se pudo conectar con el servidor' };
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -121,6 +149,7 @@ export const AuthProvider = ({ children }) => {
     user,
     token,
     login,
+    updateCredentials,
     logout,
     isAuthenticated,
     loading
