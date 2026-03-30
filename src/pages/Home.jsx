@@ -6,6 +6,7 @@ import { useTurnos } from '../context/TurnosContext';
 import { useAuth } from '../context/AuthContext';
 import PublicHome from '../components/home/PublicHome';
 import DoctorChatModal from '../components/layout/DoctorChatModal';
+import AppVersionBadge from '../components/layout/AppVersionBadge';
 
 const Home = () => {
   const { isAuthenticated } = useAuth();
@@ -66,9 +67,12 @@ const Home = () => {
             </div>
           </Col>
           <Col md={4} className="text-md-end mt-3 mt-md-0">
-            <Badge bg="light" text="dark" className="fs-6 py-2 px-3 shadow-sm border-0">
-              {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </Badge>
+            <div className="d-flex flex-column align-items-md-end gap-2">
+              <Badge bg="light" text="dark" className="fs-6 py-2 px-3 shadow-sm border-0">
+                {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </Badge>
+              <AppVersionBadge bg="light" text="dark" className="py-2 px-3 shadow-sm border-0" />
+            </div>
           </Col>
         </Row>
       </div>
