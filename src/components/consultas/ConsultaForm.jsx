@@ -523,7 +523,8 @@ const ConsultaForm = () => {
                 value={formData.motivo}
                 onChange={handleChange}
                 isInvalid={!!errors.motivo}
-                placeholder="Describa el motivo de la consulta..."
+                placeholder="Ej.: cefalea de 3 días, control de rutina, dolor abdominal..."
+                className="placeholder-subtle"
               />
               <Form.Control.Feedback type="invalid">
                 {errors.motivo}
@@ -538,7 +539,8 @@ const ConsultaForm = () => {
                 name="diagnostico"
                 value={formData.diagnostico}
                 onChange={handleChange}
-                placeholder="Diagnóstico médico..."
+                placeholder="Ej.: migraña, virosis respiratoria, paciente en observación..."
+                className="placeholder-subtle"
               />
             </Form.Group>
 
@@ -550,7 +552,8 @@ const ConsultaForm = () => {
                 name="tratamiento"
                 value={formData.tratamiento}
                 onChange={handleChange}
-                placeholder="Medicación, estudios solicitados, indicaciones..."
+                placeholder="Ej.: reposo, hidratación, ibuprofeno, laboratorio solicitado..."
+                className="placeholder-subtle"
               />
             </Form.Group>
 
@@ -562,7 +565,8 @@ const ConsultaForm = () => {
                 name="observaciones"
                 value={formData.observaciones}
                 onChange={handleChange}
-                placeholder="Observaciones adicionales..."
+                placeholder="Ej.: refiere mejoría, acompañar evolución, revisar estudios..."
+                className="placeholder-subtle"
               />
             </Form.Group>
 
