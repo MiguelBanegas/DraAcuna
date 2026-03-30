@@ -6,6 +6,23 @@ import { usePacientes } from '../../context/PacientesContext';
 import Swal from 'sweetalert2';
 import { parseLocalDate } from '../../utils/date';
 
+const formatDateForInput = (value) => {
+  if (!value) return '';
+  const parsed = parseLocalDate(value);
+  if (!parsed) return '';
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const day = String(parsed.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatDateTimeForDisplay = (value) => {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return parsed.toISOString();
+};
+
 const PacienteForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -40,14 +57,14 @@ const PacienteForm = () => {
           setFormData({
             nombreCompleto: paciente.nombreCompleto || '',
             dni: paciente.dni || '',
-            fechaNacimiento: paciente.fechaNacimiento || '',
+            fechaNacimiento: formatDateForInput(paciente.fechaNacimiento),
             genero: paciente.genero || '',
             telefono: paciente.telefono || '',
             email: paciente.email || '',
             direccion: paciente.direccion || '',
             obraSocial: paciente.obraSocial || '',
             numeroAfiliado: paciente.numeroAfiliado || '',
-            fechaCreacion: paciente.fechaCreacion || ''
+            fechaCreacion: formatDateTimeForDisplay(paciente.fechaCreacion)
           });
         });
       } else {
