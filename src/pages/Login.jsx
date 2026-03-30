@@ -74,7 +74,7 @@ const Login = () => {
                   <div className="login-icon mb-3">
                     <FaUser size={50} className="text-primary" />
                   </div>
-                  <h2 className="mb-2">Consultorio Dra Acuña</h2>
+                  <h2 className="mb-2">Consultorio Dra. Ana Acuña</h2>
                   <p className="text-muted">Ingrese sus credenciales</p>
                 </div>
 
