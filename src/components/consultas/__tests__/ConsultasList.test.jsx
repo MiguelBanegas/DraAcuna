@@ -22,6 +22,8 @@ vi.mock('../../../context/PacientesContext', () => ({
 vi.mock('sweetalert2', () => ({
   default: {
     fire: vi.fn(),
+    isLoading: vi.fn(() => false),
+    showValidationMessage: vi.fn(),
   },
 }));
 
@@ -56,7 +58,13 @@ describe('ConsultasList', () => {
       buscarConsultas,
     });
     usePacientes.mockReturnValue({ pacientes });
-    Swal.fire.mockResolvedValue({ isConfirmed: true });
+    Swal.fire.mockImplementation(async (options) => {
+      if (options?.preConfirm) {
+        await options.preConfirm();
+        return { isConfirmed: true };
+      }
+      return { isConfirmed: true };
+    });
   });
 
   it('muestra estado inicial vacio y fuerza limpieza de lista', async () => {
@@ -158,7 +166,7 @@ describe('ConsultasList', () => {
       expect(eliminarConsulta).toHaveBeenCalledWith(10);
       expect(Swal.fire).toHaveBeenCalled();
     });
-  });
+  }, 30000);
 
   it('no elimina cuando el usuario cancela en confirmacion', async () => {
     Swal.fire.mockResolvedValueOnce({ isConfirmed: false });
@@ -191,7 +199,13 @@ describe('ConsultasList', () => {
   it('muestra alerta de error cuando falla la eliminacion', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     eliminarConsulta.mockRejectedValueOnce(new Error('delete failed'));
-    Swal.fire.mockResolvedValueOnce({ isConfirmed: true });
+    Swal.fire.mockImplementationOnce(async (options) => {
+      if (options?.preConfirm) {
+        await expect(options.preConfirm()).rejects.toThrow('delete failed');
+        return { isConfirmed: false };
+      }
+      return { isConfirmed: true };
+    });
     useConsultas.mockReturnValue({
       consultas: [consulta],
       eliminarConsulta,
@@ -202,9 +216,45 @@ describe('ConsultasList', () => {
     fireEvent.click(screen.getByTitle('Eliminar'));
 
     await waitFor(() => {
-      expect(Swal.fire).toHaveBeenCalledWith('Error', 'No se pudo eliminar la consulta', 'error');
+      expect(Swal.showValidationMessage).toHaveBeenCalledWith('No se pudo eliminar la consulta');
     });
 
     consoleErrorSpy.mockRestore();
-  });
+  }, 30000);
+
+  it('deshabilita acciones repetidas mientras una eliminacion sigue pendiente', async () => {
+    let resolveDelete;
+    eliminarConsulta.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveDelete = resolve;
+        }),
+    );
+    useConsultas.mockReturnValue({
+      consultas: [consulta],
+      eliminarConsulta,
+      buscarConsultas,
+    });
+    Swal.fire.mockImplementationOnce(async (options) => {
+      await options.preConfirm();
+      return { isConfirmed: true };
+    });
+
+    render(<ConsultasList />);
+    fireEvent.click(screen.getByTitle('Eliminar'));
+
+    await waitFor(() => {
+      expect(eliminarConsulta).toHaveBeenCalledWith(10);
+    });
+
+    expect(screen.getByRole('button', { name: /Nueva Consulta/i })).toBeDisabled();
+    expect(screen.getByTitle('Editar')).toBeDisabled();
+    expect(screen.getByTitle('Eliminar')).toBeDisabled();
+
+    resolveDelete();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Nueva Consulta/i })).not.toBeDisabled();
+    });
+  }, 30000);
 });

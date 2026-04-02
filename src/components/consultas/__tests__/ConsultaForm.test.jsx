@@ -51,9 +51,11 @@ vi.mock('react-select/async', () => ({
 describe('ConsultaForm', () => {
   const agregarConsulta = vi.fn();
   const actualizarConsulta = vi.fn();
+  let resolveSubmit;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    resolveSubmit = undefined;
     mockParams.id = undefined;
     mockLocation.state = null;
     usePacientes.mockReturnValue({
@@ -110,6 +112,44 @@ describe('ConsultaForm', () => {
       }),
     );
     expect(mockNavigate).toHaveBeenCalledWith('/consultas');
+  }, 30000);
+
+  it('bloquea envíos repetidos mientras la consulta se está guardando', async () => {
+    agregarConsulta.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSubmit = resolve;
+        }),
+    );
+
+    render(<ConsultaForm />);
+
+    await waitFor(() => {
+      const fechaInput = document.querySelector('input[name="fechaHora"]');
+      expect(fechaInput).not.toBeNull();
+      expect(fechaInput.value).not.toBe('');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Seleccionar paciente mock/i }));
+    fireEvent.change(screen.getByPlaceholderText(/Ej\.: cefalea de 3 días/i), {
+      target: { value: 'Dolor de cabeza' },
+    });
+
+    const submitButton = screen.getByRole('button', { name: /Guardar/i });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Guardando/i })).toBeDisabled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Guardando/i }));
+    expect(agregarConsulta).toHaveBeenCalledTimes(1);
+
+    resolveSubmit({ id: 99 });
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/consultas');
+    });
   }, 30000);
 
   it('muestra error si falla el guardado', async () => {

@@ -42,6 +42,7 @@ const ConsultaForm = () => {
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [pacienteOption, setPacienteOption] = useState(null);
   const loadTimer = useRef(null);
 
@@ -222,6 +223,9 @@ const ConsultaForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) {
+      return;
+    }
     setSubmitError('');
 
     if (!validateForm()) {
@@ -229,6 +233,7 @@ const ConsultaForm = () => {
     }
 
     try {
+      setSubmitting(true);
       const consultaData = {
         ...formData,
         fechaHora: new Date(formData.fechaHora).toISOString()
@@ -253,6 +258,8 @@ const ConsultaForm = () => {
       console.error('Error al guardar la consulta:', error);
       setSubmitError('Error al guardar la consulta. Por favor, intente nuevamente.');
       Swal.fire('Error', 'No se pudo guardar la consulta', 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -271,11 +278,13 @@ const ConsultaForm = () => {
       <Card>
         <Card.Body>
           <Form onSubmit={handleSubmit}>
+            <fieldset disabled={submitting}>
             <Row>
               <Col md={8}>
                 <Form.Group className="mb-3">
                   <Form.Label>Paciente *</Form.Label>
                   <AsyncSelect
+                    isDisabled={submitting}
                     loadOptions={loadOptions}
                     value={pacienteOption || pacientesOptions.find(opt => opt.value === formData.pacienteId) || null}
                     onChange={(selectedOption) => {
@@ -591,15 +600,17 @@ const ConsultaForm = () => {
               <Button 
                 variant="secondary" 
                 onClick={() => navigate('/consultas')}
+                disabled={submitting}
               >
                 <FaTimes className="me-2" />
                 Cancelar
               </Button>
-              <Button variant="primary" type="submit">
+              <Button variant="primary" type="submit" disabled={submitting}>
                 <FaSave className="me-2" />
-                {isEditing ? 'Actualizar' : 'Guardar'}
+                {submitting ? 'Guardando...' : isEditing ? 'Actualizar' : 'Guardar'}
               </Button>
             </div>
+            </fieldset>
           </Form>
         </Card.Body>
       </Card>

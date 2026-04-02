@@ -44,6 +44,7 @@ const PacienteForm = () => {
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [pacienteExistentePorDni, setPacienteExistentePorDni] = useState(null);
   const firstInputRef = useRef(null);
 
@@ -184,6 +185,9 @@ const PacienteForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) {
+      return;
+    }
     setSubmitError('');
 
     if (!validateForm()) {
@@ -191,6 +195,7 @@ const PacienteForm = () => {
     }
 
     try {
+      setSubmitting(true);
       if (isEditing) {
         await actualizarPaciente(id, formData);
       } else {
@@ -210,6 +215,8 @@ const PacienteForm = () => {
       console.error('Error al guardar paciente:', error);
       setSubmitError('Error al guardar el paciente. Por favor, intente nuevamente.');
       Swal.fire('Error', 'No se pudo guardar el paciente', 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -239,6 +246,7 @@ const PacienteForm = () => {
       <Card>
         <Card.Body>
           <Form onSubmit={handleSubmit}>
+            <fieldset disabled={submitting}>
             {isEditing && (
               <Row>
                 <Col md={6}>
@@ -416,15 +424,17 @@ const PacienteForm = () => {
               <Button 
                 variant="secondary" 
                 onClick={() => navigate('/pacientes')}
+                disabled={submitting}
               >
                 <FaTimes className="me-2" />
                 Cancelar
               </Button>
-              <Button variant="primary" type="submit">
+              <Button variant="primary" type="submit" disabled={submitting}>
                 <FaSave className="me-2" />
-                {isEditing ? 'Actualizar' : 'Guardar'}
+                {submitting ? 'Guardando...' : isEditing ? 'Actualizar' : 'Guardar'}
               </Button>
             </div>
+            </fieldset>
           </Form>
         </Card.Body>
       </Card>
