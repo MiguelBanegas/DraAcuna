@@ -11,6 +11,7 @@ const PacientesList = () => {
   const { pacientes, eliminarPaciente, buscarPacientes } = usePacientes();
   const [searchTerm, setSearchTerm] = useState('');
   const [pacientesFiltrados, setPacientesFiltrados] = useState([]);
+  const [pendingActionId, setPendingActionId] = useState(null);
   const searchInputRef = useRef(null);
 
   // Auto-focus en el campo de búsqueda al cargar el componente
@@ -35,6 +36,10 @@ const PacientesList = () => {
 
   // Manejar eliminación con confirmación
   const handleDelete = async (id, nombre) => {
+    if (pendingActionId !== null) {
+      return;
+    }
+
     const result = await Swal.fire({
       title: '¿Está seguro?',
       text: `Está por eliminar al paciente ${nombre}. Esta acción no se puede deshacer.`,
@@ -44,12 +49,23 @@ const PacientesList = () => {
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar',
-      reverseButtons: true
+      reverseButtons: true,
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => !Swal.isLoading(),
+      preConfirm: async () => {
+        setPendingActionId(id);
+        try {
+          await eliminarPaciente(id);
+        } catch (error) {
+          setPendingActionId(null);
+          Swal.showValidationMessage('No se pudo eliminar el paciente');
+          throw error;
+        }
+      }
     });
 
     if (result.isConfirmed) {
       try {
-        await eliminarPaciente(id);
         // Actualizar la lista filtrada tras eliminar
         if (searchTerm.trim().length >= 3) {
           const resultados = buscarPacientes(searchTerm);
@@ -65,6 +81,8 @@ const PacientesList = () => {
       } catch (error) {
         console.error('Error al eliminar paciente:', error);
         Swal.fire('Error', 'No se pudo eliminar al paciente', 'error');
+      } finally {
+        setPendingActionId(null);
       }
     }
   };
@@ -86,6 +104,7 @@ const PacientesList = () => {
             <Button 
               variant="primary" 
               onClick={() => navigate('/pacientes/nuevo')}
+              disabled={pendingActionId !== null}
             >
               <FaPlus className="me-2" />
               Nuevo Paciente
@@ -134,6 +153,7 @@ const PacientesList = () => {
                 <Button 
                   variant="outline-primary" 
                   onClick={() => navigate('/pacientes/nuevo')}
+                  disabled={pendingActionId !== null}
                 >
                   <FaPlus className="me-2" />
                   Agregar Nuevo Paciente
@@ -180,6 +200,7 @@ const PacientesList = () => {
                             size="sm"
                             onClick={() => navigate(`/pacientes/${paciente.id}`)}
                             title="Ver detalle"
+                            disabled={pendingActionId !== null}
                           >
                             <FaEye />
                           </Button>
@@ -188,6 +209,7 @@ const PacientesList = () => {
                             size="sm"
                             onClick={() => navigate(`/pacientes/${paciente.id}/editar`)}
                             title="Editar"
+                            disabled={pendingActionId !== null}
                           >
                             <FaEdit />
                           </Button>
@@ -196,8 +218,13 @@ const PacientesList = () => {
                             size="sm"
                             onClick={() => handleDelete(paciente.id, paciente.nombreCompleto)}
                             title="Eliminar"
+                            disabled={pendingActionId !== null}
                           >
-                            <FaTrash />
+                            {pendingActionId === paciente.id ? (
+                              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            ) : (
+                              <FaTrash />
+                            )}
                           </Button>
                         </div>
                       </td>

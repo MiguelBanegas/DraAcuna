@@ -19,6 +19,7 @@ const HistoriaClinicaForm = () => {
   const [observaciones, setObservaciones] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   useEffect(() => {
     const fetchDatos = async () => {
       setLoading(true);
@@ -43,16 +44,20 @@ const HistoriaClinicaForm = () => {
     return (
       <Container className="py-5 text-center">
         <div className="alert alert-danger mb-4">Paciente no encontrado</div>
-        <Button onClick={() => navigate('/historia-clinica')}>Volver</Button>
+        <Button onClick={() => navigate('/historia-clinica')} disabled={submitting}>Volver</Button>
       </Container>
     );
   }
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+    if (submitting) {
+      return;
+    }
     setSubmitError('');
 
     try {
+      setSubmitting(true);
       const historiaData = {
         pacienteId: pacienteId,
         observacionesMedico: observaciones
@@ -74,6 +79,8 @@ const HistoriaClinicaForm = () => {
       const msg = error?.message || 'Error al guardar la historia clínica';
       setSubmitError(msg);
       Swal.fire('Error', msg, 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -100,10 +107,10 @@ const HistoriaClinicaForm = () => {
           Generar Historia Clínica
         </h2>
         <div className="d-flex gap-2">
-          <Button variant="outline-secondary" onClick={() => navigate('/historia-clinica')}>
+          <Button variant="outline-secondary" onClick={() => navigate('/historia-clinica')} disabled={submitting}>
             <FaTimes className="me-2" /> Cancelar
           </Button>
-          <Button variant="info" onClick={handlePrint}>
+          <Button variant="info" onClick={handlePrint} disabled={submitting}>
             <FaPrint className="me-2" /> Imprimir Vista
           </Button>
         </div>
@@ -177,16 +184,17 @@ const HistoriaClinicaForm = () => {
                 onChange={(e) => setObservaciones(e.target.value)}
                 placeholder="Escriba aquí sus observaciones generales, recomendaciones o conclusiones..."
                 className="mb-3"
+                disabled={submitting}
               />
               <div className="text-end">
                 <Button 
                   variant="primary" 
                   onClick={handleSubmit}
-                  disabled={!observaciones.trim()}
+                  disabled={!observaciones.trim() || submitting}
                   className="d-inline-flex align-items-center gap-2"
                 >
                   <FaSave />
-                  Guardar Observaciones
+                  {submitting ? 'Guardando...' : 'Guardar Observaciones'}
                 </Button>
               </div>
             </div>

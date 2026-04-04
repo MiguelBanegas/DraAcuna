@@ -22,8 +22,15 @@ vi.mock('sweetalert2', () => ({
 }));
 
 describe('PacienteForm', () => {
+  let agregarPaciente;
+  let actualizarPaciente;
+  let resolveSubmit;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    resolveSubmit = undefined;
+    agregarPaciente = vi.fn();
+    actualizarPaciente = vi.fn();
     mockParams.id = '1';
     usePacientes.mockReturnValue({
       pacientes: [
@@ -41,8 +48,8 @@ describe('PacienteForm', () => {
           fechaCreacion: '2026-03-03T10:00:00.000Z',
         },
       ],
-      agregarPaciente: vi.fn(),
-      actualizarPaciente: vi.fn(),
+      agregarPaciente,
+      actualizarPaciente,
     });
   });
 
@@ -69,8 +76,8 @@ describe('PacienteForm', () => {
           dni: '12345678',
         },
       ],
-      agregarPaciente: vi.fn(),
-      actualizarPaciente: vi.fn(),
+      agregarPaciente,
+      actualizarPaciente,
     });
 
     render(<PacienteForm />);
@@ -83,4 +90,56 @@ describe('PacienteForm', () => {
     expect(screen.getByText(/Ya existe el paciente:/i)).toBeInTheDocument();
     expect(screen.getByText('Ana Perez')).toBeInTheDocument();
   });
+
+  it('bloquea envíos repetidos mientras el paciente se está guardando', async () => {
+    mockParams.id = undefined;
+    agregarPaciente.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSubmit = resolve;
+        }),
+    );
+    usePacientes.mockReturnValue({
+      pacientes: [],
+      agregarPaciente,
+      actualizarPaciente,
+    });
+
+    render(<PacienteForm />);
+
+    fireEvent.change(document.querySelector('input[name="nombreCompleto"]'), {
+      target: { value: 'Juan Perez' },
+    });
+    fireEvent.change(document.querySelector('input[name="dni"]'), {
+      target: { value: '12345678' },
+    });
+    fireEvent.change(document.querySelector('input[name="fechaNacimiento"]'), {
+      target: { value: '1990-05-14' },
+    });
+    fireEvent.change(document.querySelector('select[name="genero"]'), {
+      target: { value: 'Masculino' },
+    });
+    fireEvent.change(document.querySelector('input[name="telefono"]'), {
+      target: { value: '11-1234-5678' },
+    });
+    fireEvent.change(document.querySelector('input[name="email"]'), {
+      target: { value: 'juan@example.com' },
+    });
+
+    const submitButton = screen.getByRole('button', { name: /Guardar/i });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Guardando/i })).toBeDisabled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Guardando/i }));
+    expect(agregarPaciente).toHaveBeenCalledTimes(1);
+
+    resolveSubmit({ id: 2 });
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/pacientes');
+    });
+  }, 30000);
 });
