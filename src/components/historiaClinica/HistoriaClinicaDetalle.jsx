@@ -20,6 +20,8 @@ const HistoriaClinicaDetalle = () => {
   const [consultas, setConsultas] = useState([]);
   const [observaciones, setObservaciones] = useState('');
   const [editando, setEditando] = useState(false);
+  const [savingObservaciones, setSavingObservaciones] = useState(false);
+  const [deletingHistoria, setDeletingHistoria] = useState(false);
 
   // Datos del médico
   const medicoData = {
@@ -61,7 +63,12 @@ const HistoriaClinicaDetalle = () => {
   };
 
   const handleGuardarObservaciones = async () => {
+    if (savingObservaciones || deletingHistoria) {
+      return;
+    }
+
     try {
+      setSavingObservaciones(true);
       await actualizarHistoriaClinica(id, {
         ...historia,
         observacionesMedico: observaciones
@@ -69,6 +76,8 @@ const HistoriaClinicaDetalle = () => {
       setEditando(false);
     } catch (error) {
       console.error('Error al guardar observaciones:', error);
+    } finally {
+      setSavingObservaciones(false);
     }
   };
 
@@ -77,6 +86,10 @@ const HistoriaClinicaDetalle = () => {
   };
 
   const handleEliminar = async () => {
+    if (deletingHistoria || savingObservaciones) {
+      return;
+    }
+
     const result = await Swal.fire({
       title: '¿Está seguro?',
       text: 'Está por eliminar esta historia clínica. Esta acción no se puede deshacer.',
@@ -86,12 +99,23 @@ const HistoriaClinicaDetalle = () => {
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar',
-      reverseButtons: true
+      reverseButtons: true,
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => !Swal.isLoading(),
+      preConfirm: async () => {
+        setDeletingHistoria(true);
+        try {
+          await eliminarHistoriaClinica(id);
+        } catch (error) {
+          setDeletingHistoria(false);
+          Swal.showValidationMessage('No se pudo eliminar la historia clínica');
+          throw error;
+        }
+      }
     });
 
     if (result.isConfirmed) {
       try {
-        await eliminarHistoriaClinica(id);
         navigate('/historia-clinica');
         await Swal.fire({
           title: 'Eliminado',
@@ -103,6 +127,8 @@ const HistoriaClinicaDetalle = () => {
       } catch (error) {
         Swal.fire('Error', 'No se pudo eliminar la historia clínica', 'error');
         console.error('Error al eliminar:', error);
+      } finally {
+        setDeletingHistoria(false);
       }
     }
   };
@@ -116,6 +142,7 @@ const HistoriaClinicaDetalle = () => {
               variant="outline-secondary" 
               onClick={() => navigate('/historia-clinica')}
               className="mb-3 no-print"
+              disabled={savingObservaciones || deletingHistoria}
             >
               <FaArrowLeft className="me-2 no-print" />
               Volver
@@ -127,14 +154,16 @@ const HistoriaClinicaDetalle = () => {
                   variant="danger" 
                   onClick={handleEliminar}
                   className="no-print"
+                  disabled={savingObservaciones || deletingHistoria}
                 >
                   <FaTrash className="me-2 no-print" />
-                  Eliminar
+                  {deletingHistoria ? 'Eliminando...' : 'Eliminar'}
                 </Button>
                 <Button 
                   variant="primary" 
                   onClick={handleImprimir}
                   className="no-print"
+                  disabled={savingObservaciones || deletingHistoria}
                 >
                   <FaPrint className="me-2 no-print" />
                   Imprimir
@@ -278,6 +307,7 @@ const HistoriaClinicaDetalle = () => {
                 variant="outline-primary" 
                 onClick={() => setEditando(true)}
                 className="no-print"
+                disabled={savingObservaciones || deletingHistoria}
               >
                 <FaEdit className="me-1" />
                 Editar
@@ -293,6 +323,7 @@ const HistoriaClinicaDetalle = () => {
                   value={observaciones}
                   onChange={(e) => setObservaciones(e.target.value)}
                   placeholder="Agregue observaciones, conclusiones o recomendaciones..."
+                  disabled={savingObservaciones || deletingHistoria}
                 />
                 <div className="d-flex gap-2 justify-content-end mt-3">
                   <Button 
@@ -302,6 +333,7 @@ const HistoriaClinicaDetalle = () => {
                       setObservaciones(historia.observacionesMedico || '');
                       setEditando(false);
                     }}
+                    disabled={savingObservaciones || deletingHistoria}
                   >
                     Cancelar
                   </Button>
@@ -309,9 +341,10 @@ const HistoriaClinicaDetalle = () => {
                     variant="primary" 
                     size="sm"
                     onClick={handleGuardarObservaciones}
+                    disabled={savingObservaciones || deletingHistoria}
                   >
                     <FaSave className="me-1" />
-                    Guardar
+                    {savingObservaciones ? 'Guardando...' : 'Guardar'}
                   </Button>
                 </div>
               </div>

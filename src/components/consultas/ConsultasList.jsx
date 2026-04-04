@@ -14,6 +14,7 @@ const ConsultasList = () => {
   const [filtroFecha, setFiltroFecha] = useState('');
   const [filtroPaciente, setFiltroPaciente] = useState('');
   const [loadingSearch, setLoadingSearch] = useState(false);
+  const [pendingActionId, setPendingActionId] = useState(null);
   const searchInputRef = useRef(null);
 
   // Auto-focus en el campo de búsqueda al cargar el componente
@@ -57,6 +58,10 @@ const ConsultasList = () => {
   }, [searchTerm, filtroPaciente, filtroFecha]);
 
   const handleDelete = async (id, pacienteNombre) => {
+    if (pendingActionId !== null) {
+      return;
+    }
+
     const result = await Swal.fire({
       title: '¿Está seguro?',
       text: `Está por eliminar la consulta de ${pacienteNombre}. Esta acción no se puede deshacer.`,
@@ -66,12 +71,23 @@ const ConsultasList = () => {
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar',
-      reverseButtons: true
+      reverseButtons: true,
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => !Swal.isLoading(),
+      preConfirm: async () => {
+        setPendingActionId(id);
+        try {
+          await eliminarConsulta(id);
+        } catch (error) {
+          setPendingActionId(null);
+          Swal.showValidationMessage('No se pudo eliminar la consulta');
+          throw error;
+        }
+      }
     });
 
     if (result.isConfirmed) {
       try {
-        await eliminarConsulta(id);
         await Swal.fire({
           title: 'Eliminado',
           text: 'La consulta ha sido eliminada correctamente.',
@@ -82,6 +98,8 @@ const ConsultasList = () => {
       } catch (error) {
         console.error('Error al eliminar consulta:', error);
         Swal.fire('Error', 'No se pudo eliminar la consulta', 'error');
+      } finally {
+        setPendingActionId(null);
       }
     }
   };
@@ -160,6 +178,7 @@ const ConsultasList = () => {
                 variant="success" 
                 onClick={() => navigate('/consultas/nueva')}
                 className="d-flex align-items-center"
+                disabled={pendingActionId !== null}
               >
                 <FaPlus className="me-2" />
                 Nueva Consulta
@@ -175,6 +194,7 @@ const ConsultasList = () => {
                     setFiltroPaciente('');
                   }}
                   className="ms-auto"
+                  disabled={pendingActionId !== null}
                 >
                   Limpiar filtros
                 </Button>
@@ -242,6 +262,7 @@ const ConsultasList = () => {
                               size="sm"
                               onClick={() => navigate(`/consultas/${consulta.id}`)}
                               title="Ver detalle"
+                              disabled={pendingActionId !== null}
                             >
                               <FaEye />
                             </Button>
@@ -250,6 +271,7 @@ const ConsultasList = () => {
                               size="sm"
                               onClick={() => navigate(`/consultas/${consulta.id}/editar`)}
                               title="Editar"
+                              disabled={pendingActionId !== null}
                             >
                               <FaEdit />
                             </Button>
@@ -258,8 +280,13 @@ const ConsultasList = () => {
                               size="sm"
                               onClick={() => handleDelete(consulta.id, paciente?.nombreCompleto || 'paciente')}
                               title="Eliminar"
+                              disabled={pendingActionId !== null}
                             >
-                              <FaTrash />
+                              {pendingActionId === consulta.id ? (
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                              ) : (
+                                <FaTrash />
+                              )}
                             </Button>
                           </div>
                         </td>
