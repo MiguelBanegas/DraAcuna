@@ -142,6 +142,19 @@ body {
 }
 
 /* Mini Calendar Styles */
+.calendar-view-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.calendar-view-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .mini-calendar {
   width: 100%;
 }
@@ -195,6 +208,15 @@ body {
 }
 
 @media (max-width: 576px) {
+  .calendar-view-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .calendar-view-actions {
+    justify-content: flex-end;
+  }
+
   .day-name {
     font-size: 0.65rem;
   }

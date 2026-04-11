@@ -1,6 +1,11 @@
 import { Card, Badge } from 'react-bootstrap';
 import { useTurnos } from '../../context/TurnosContext';
 
+const MONTH_NAMES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+
 const MiniCalendar = ({ year, month, onDayClick }) => {
   const { turnos } = useTurnos();
 
@@ -14,11 +19,6 @@ const MiniCalendar = ({ year, month, onDayClick }) => {
   const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
   // Nombre del mes
-  const monthNames = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ];
-
   // Función para obtener turnos de un día específico
   const getTurnosDia = (day) => {
     return turnos.filter(turno => {
@@ -82,7 +82,7 @@ const MiniCalendar = ({ year, month, onDayClick }) => {
   return (
     <Card className="shadow-sm h-100">
       <Card.Header className="bg-light">
-        <h6 className="mb-0 text-center">{monthNames[month]} {year}</h6>
+        <h6 className="mb-0 text-center">{MONTH_NAMES[month]} {year}</h6>
       </Card.Header>
       <Card.Body className="p-2">
         <div className="mini-calendar">
