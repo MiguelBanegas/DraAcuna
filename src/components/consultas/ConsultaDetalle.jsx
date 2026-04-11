@@ -321,6 +321,19 @@ const ConsultaDetalle = () => {
             </Card.Body>
           </Card>
 
+          {consulta.examenFisico && (
+            <Card className="mb-3">
+              <Card.Header>
+                <h5 className="mb-0">Examen Físico</h5>
+              </Card.Header>
+              <Card.Body>
+                <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>
+                  {consulta.examenFisico}
+                </p>
+              </Card.Body>
+            </Card>
+          )}
+
           {consulta.diagnostico && (
             <Card className="mb-3">
               <Card.Header>
