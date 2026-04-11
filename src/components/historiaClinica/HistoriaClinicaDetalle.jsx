@@ -233,6 +233,10 @@ const HistoriaClinicaDetalle = () => {
                     <div className="mb-2" style={{ fontSize: '0.95rem' }}>
                       <p className="mb-1"><strong>Motivo:</strong> {consulta.motivo}</p>
                       
+                      {consulta.examenFisico && (
+                        <p className="mb-1"><strong>Examen Físico:</strong> {consulta.examenFisico}</p>
+                      )}
+
                       {consulta.diagnostico && (
                         <p className="mb-1"><strong>Diagnóstico:</strong> {consulta.diagnostico}</p>
                       )}

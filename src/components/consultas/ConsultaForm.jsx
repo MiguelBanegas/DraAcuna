@@ -19,6 +19,7 @@ const ConsultaForm = () => {
     pacienteId: location.state?.pacienteId || '',
     fechaHora: '',
     motivo: '',
+    examenFisico: '',
     diagnostico: '',
     tratamiento: '',
     observaciones: '',
@@ -72,6 +73,7 @@ const ConsultaForm = () => {
             pacienteId: consulta.pacienteId || '',
             fechaHora: consulta.fechaHora ? formatearFechaLocal(consulta.fechaHora) : '',
             motivo: consulta.motivo || '',
+            examenFisico: consulta.examenFisico || '',
             diagnostico: consulta.diagnostico || '',
             tratamiento: consulta.tratamiento || '',
             observaciones: consulta.observaciones || '',
@@ -538,6 +540,19 @@ const ConsultaForm = () => {
               <Form.Control.Feedback type="invalid">
                 {errors.motivo}
               </Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Examen Físico</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                name="examenFisico"
+                value={formData.examenFisico}
+                onChange={handleChange}
+                placeholder="Ej.: paciente lúcido, abdomen blando..."
+                className="placeholder-subtle"
+              />
             </Form.Group>
 
             <Form.Group className="mb-3">
