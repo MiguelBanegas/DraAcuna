@@ -56,6 +56,7 @@ export const createConsulta = async (req, res) => {
     paciente_id,
     fecha_hora,
     motivo,
+    examen_fisico,
     diagnostico,
     tratamiento,
     observaciones,
@@ -65,15 +66,16 @@ export const createConsulta = async (req, res) => {
   try {
     const query = `
       INSERT INTO consultas (
-        paciente_id, fecha_hora, motivo, diagnostico, 
+        paciente_id, fecha_hora, motivo, examen_fisico, diagnostico, 
         tratamiento, observaciones, signos_vitales, proxima_consulta
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
       RETURNING *
     `;
     const values = [
       paciente_id,
       fecha_hora,
       motivo,
+      examen_fisico,
       diagnostico,
       tratamiento,
       observaciones,
@@ -93,6 +95,7 @@ export const updateConsulta = async (req, res) => {
   const { id } = req.params;
   const {
     motivo,
+    examen_fisico,
     diagnostico,
     tratamiento,
     observaciones,
@@ -104,14 +107,15 @@ export const updateConsulta = async (req, res) => {
   try {
     const query = `
       UPDATE consultas SET 
-        motivo = $1, diagnostico = $2, tratamiento = $3, observaciones = $4, 
-        signos_vitales = $5, proxima_consulta = $6, fecha_hora = $7
-      WHERE id = $8 
+        motivo = $1, examen_fisico = $2, diagnostico = $3, tratamiento = $4, observaciones = $5, 
+        signos_vitales = $6, proxima_consulta = $7, fecha_hora = $8
+      WHERE id = $9 
       RETURNING *
     `;
 
     const values = [
       motivo,
+      examen_fisico,
       diagnostico,
       tratamiento,
       observaciones,
