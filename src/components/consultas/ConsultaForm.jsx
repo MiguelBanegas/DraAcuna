@@ -77,7 +77,7 @@ const ConsultaForm = () => {
             diagnostico: consulta.diagnostico || '',
             tratamiento: consulta.tratamiento || '',
             observaciones: consulta.observaciones || '',
-            proximaConsulta: consulta.proximaConsulta || '',
+            proximaConsulta: consulta.proximaConsulta ? formatearFechaLocal(consulta.proximaConsulta).substring(0, 10) : '',
             signosVitales: consulta.signosVitales || {
               presionArterial: { sistolica: '', diastolica: '' },
               frecuenciaCardiaca: '',
