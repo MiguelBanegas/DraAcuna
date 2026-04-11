@@ -1,27 +1,37 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { FaSyncAlt } from 'react-icons/fa';
 import 'react-toastify/dist/ReactToastify.css';
 
+const VERSION_STORAGE_KEY = 'dra-acuna-version';
+const RELOAD_GUARD_KEY = 'dra-acuna-version-reload';
+
 const UpdateNotifier = () => {
   const versionRef = useRef(null);
   const isFirstFetch = useRef(true);
-  const [checking, setChecking] = useState(false);
 
   const checkVersion = useCallback(async () => {
-    // Usamos el estado checking solo para UI o prevención, 
-    // pero evitamos usarlo como dependencia en useCallback para no romper useEffect
     try {
       const response = await fetch(`/version.json?t=${new Date().getTime()}`);
       if (!response.ok) throw new Error('No se pudo obtener la versión');
       
       const data = await response.json();
       const newVersion = data.version;
+      const storedVersion = localStorage.getItem(VERSION_STORAGE_KEY);
+      const reloadGuardVersion = sessionStorage.getItem(RELOAD_GUARD_KEY);
 
       if (isFirstFetch.current) {
+        if (storedVersion && newVersion !== storedVersion && reloadGuardVersion !== newVersion) {
+          localStorage.setItem(VERSION_STORAGE_KEY, newVersion);
+          sessionStorage.setItem(RELOAD_GUARD_KEY, newVersion);
+          window.location.reload();
+          return;
+        }
+
+        localStorage.setItem(VERSION_STORAGE_KEY, newVersion);
+        sessionStorage.removeItem(RELOAD_GUARD_KEY);
         versionRef.current = newVersion;
         isFirstFetch.current = false;
-        console.log(`Versión base establecida en: ${newVersion}`);
       } else if (versionRef.current && newVersion !== versionRef.current) {
         console.log(`¡Nueva versión detectada! ${versionRef.current} -> ${newVersion}`);
         
@@ -50,19 +60,17 @@ const UpdateNotifier = () => {
             }
           );
         }
-        // Actualizamos la referencia para no volver a notificar la misma versión
+        localStorage.setItem(VERSION_STORAGE_KEY, newVersion);
         versionRef.current = newVersion;
       }
     } catch (error) {
       console.error('Error al verificar versión:', error);
     }
-  }, []); // Sin dependencias para que la identidad de la función sea estable
+  }, []);
 
   useEffect(() => {
-    // Ejecutar inmediatamente al montar
     checkVersion();
 
-    // Configurar intervalo (5 minutos para producción)
     const interval = setInterval(() => {
       checkVersion();
     }, 1000 * 60 * 5); 
