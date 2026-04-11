@@ -28,6 +28,14 @@ vi.mock('../../../services/pacientesService', () => ({
   getPacienteById: vi.fn(),
 }));
 
+vi.mock('../../../services/feriadosService', () => ({
+  getFeriadoByDate: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock('../../../services/agendaExcepcionesService', () => ({
+  getAgendaExcepciones: vi.fn().mockResolvedValue([]),
+}));
+
 vi.mock('sweetalert2', () => ({
   default: {
     fire: vi.fn(),

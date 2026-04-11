@@ -23,6 +23,10 @@ vi.mock('../../layout/CalendarView', () => ({
   default: () => <div>Calendar mock</div>,
 }));
 
+vi.mock('../AgendaExcepcionesPanel', () => ({
+  default: () => <div>Agenda exceptions mock</div>,
+}));
+
 vi.mock('sweetalert2', () => ({
   default: {
     fire: vi.fn(),

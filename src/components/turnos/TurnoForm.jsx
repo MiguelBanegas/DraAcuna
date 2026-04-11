@@ -7,6 +7,8 @@ import AsyncSelect from 'react-select/async';
 import { searchPacientes, getPacienteById } from '../../services/pacientesService';
 import { useTurnos } from '../../context/TurnosContext';
 import { usePacientes } from '../../context/PacientesContext';
+import { getFeriadoByDate } from '../../services/feriadosService';
+import { getAgendaExcepciones } from '../../services/agendaExcepcionesService';
 
 // Función auxiliar para convertir fecha UTC a local para el input datetime-local
 const formatearFechaLocal = (fechaUTC) => {
@@ -69,6 +71,8 @@ const TurnoForm = () => {
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [feriadoInfo, setFeriadoInfo] = useState(null);
+  const [agendaExceptionInfo, setAgendaExceptionInfo] = useState(null);
   const selectRef = useRef(null);
   const searchInputRef = useRef(null);
   const [pacienteOption, setPacienteOption] = useState(null);
@@ -128,6 +132,69 @@ const TurnoForm = () => {
       searchInputRef.current.focus();
     }
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadFeriado = async () => {
+      if (!formData.fechaHora) {
+        if (isMounted) {
+          setFeriadoInfo(null);
+        }
+        return;
+      }
+
+      try {
+        const feriado = await getFeriadoByDate(formData.fechaHora.slice(0, 10));
+        if (isMounted) {
+          setFeriadoInfo(feriado);
+        }
+      } catch (error) {
+        console.error('Error al consultar feriado:', error);
+        if (isMounted) {
+          setFeriadoInfo(null);
+        }
+      }
+    };
+
+    loadFeriado();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [formData.fechaHora]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadAgendaException = async () => {
+      if (!formData.fechaHora) {
+        if (isMounted) {
+          setAgendaExceptionInfo(null);
+        }
+        return;
+      }
+
+      try {
+        const fecha = formData.fechaHora.slice(0, 10);
+        const data = await getAgendaExcepciones(fecha, fecha);
+        if (isMounted) {
+          setAgendaExceptionInfo(data[0] || null);
+        }
+      } catch (error) {
+        console.error('Error al consultar excepción de agenda:', error);
+        if (isMounted) {
+          setAgendaExceptionInfo(null);
+        }
+      }
+    };
+
+    loadAgendaException();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [formData.fechaHora]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -202,6 +269,15 @@ const TurnoForm = () => {
     }
 
     if (!validateForm()) {
+      return;
+    }
+
+    if (agendaExceptionInfo?.bloqueaTurnos) {
+      Swal.fire(
+        'Agenda bloqueada',
+        `La fecha seleccionada tiene una excepción de agenda (${agendaExceptionInfo.tipo}${agendaExceptionInfo.motivo ? `: ${agendaExceptionInfo.motivo}` : ''}).`,
+        'warning',
+      );
       return;
     }
 
@@ -351,6 +427,21 @@ const TurnoForm = () => {
                     El sistema validará que no haya superposición con otros turnos
                   </Form.Text>
                 </Form.Group>
+                {feriadoInfo && (
+                  <div className="alert alert-warning py-2 px-3">
+                    <strong>Feriado nacional:</strong> {feriadoInfo.nombre} ({feriadoInfo.tipo}).
+                    Verificá si ese día habrá atención antes de confirmar el turno.
+                  </div>
+                )}
+                {agendaExceptionInfo && (
+                  <div className={`alert ${agendaExceptionInfo.bloqueaTurnos ? 'alert-danger' : 'alert-info'} py-2 px-3`}>
+                    <strong>Excepción de agenda:</strong> {agendaExceptionInfo.tipo.replace('_', ' ')}
+                    {agendaExceptionInfo.motivo ? ` - ${agendaExceptionInfo.motivo}` : ''}.
+                    {agendaExceptionInfo.bloqueaTurnos
+                      ? ' Ese día está bloqueado para nuevos turnos.'
+                      : ' Revisá el detalle antes de confirmar el turno.'}
+                  </div>
+                )}
               </Col>
 
               <Col md={4}>

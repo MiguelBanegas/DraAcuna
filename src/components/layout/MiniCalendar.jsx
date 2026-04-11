@@ -6,7 +6,10 @@ const MONTH_NAMES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
 
-const MiniCalendar = ({ year, month, onDayClick }) => {
+const formatDateKey = (year, month, day) =>
+  `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+const MiniCalendar = ({ year, month, onDayClick, feriadosMap = new Map(), agendaExcepcionesMap = new Map() }) => {
   const { turnos } = useTurnos();
 
   // Obtener el primer día del mes y el último día
@@ -56,11 +59,13 @@ const MiniCalendar = ({ year, month, onDayClick }) => {
     const turnosCount = getTurnosCount(day);
     const today = isToday(day);
     const turnosDia = getTurnosDia(day);
+    const feriado = feriadosMap.get(formatDateKey(year, month, day));
+    const agendaExcepcion = agendaExcepcionesMap.get(formatDateKey(year, month, day));
 
     days.push(
       <div
         key={day}
-        className={`mini-calendar-day ${today ? 'today' : ''} ${turnosCount > 0 ? 'has-turnos' : ''}`}
+        className={`mini-calendar-day ${today ? 'today' : ''} ${turnosCount > 0 ? 'has-turnos' : ''} ${feriado ? 'is-holiday' : ''} ${agendaExcepcion ? 'has-exception' : ''}`}
         onClick={() => {
           if (onDayClick) {
             const fecha = new Date(year, month, day);
@@ -68,8 +73,25 @@ const MiniCalendar = ({ year, month, onDayClick }) => {
           }
         }}
         style={{ cursor: turnosCount > 0 || onDayClick ? 'pointer' : 'default' }}
+        title={
+          agendaExcepcion
+            ? `${agendaExcepcion.tipo.replace('_', ' ')}${agendaExcepcion.motivo ? `: ${agendaExcepcion.motivo}` : ''}`
+            : feriado
+              ? `${feriado.nombre} (${feriado.tipo})`
+              : undefined
+        }
       >
         <div className="day-number">{day}</div>
+        {agendaExcepcion && (
+          <div className="exception-indicator" aria-label={`Excepción de agenda: ${agendaExcepcion.tipo}`}>
+            E
+          </div>
+        )}
+        {feriado && (
+          <div className="holiday-indicator" aria-label={`Feriado: ${feriado.nombre}`}>
+            F
+          </div>
+        )}
         {turnosCount > 0 && (
           <Badge bg="primary" pill className="turnos-badge">
             {turnosCount}

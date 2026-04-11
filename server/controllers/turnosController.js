@@ -1,4 +1,23 @@
 import * as db from "../db/index.js";
+import { getBlockingAgendaExceptionByDate } from "./agendaExcepcionesController.js";
+
+const getDateKeyFromIsoString = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date.toISOString().slice(0, 10);
+};
+
+const validateAgendaException = async (fechaHora) => {
+  const fecha = getDateKeyFromIsoString(fechaHora);
+
+  if (!fecha) {
+    return null;
+  }
+
+  return getBlockingAgendaExceptionByDate(fecha);
+};
 
 // Obtener todos los turnos (con filtros opcionales)
 export const getAllTurnos = async (req, res) => {
@@ -26,6 +45,13 @@ export const getAllTurnos = async (req, res) => {
 export const createTurno = async (req, res) => {
   const { paciente_id, fecha_hora, duracion, motivo, observaciones, estado } = req.body;
   try {
+    const agendaException = await validateAgendaException(fecha_hora);
+    if (agendaException) {
+      return res.status(400).json({
+        error: `La agenda está bloqueada para el ${agendaException.fecha} (${agendaException.tipo}${agendaException.motivo ? `: ${agendaException.motivo}` : ""})`,
+      });
+    }
+
     const query = `
       INSERT INTO turnos (paciente_id, fecha_hora, duracion, motivo, observaciones, estado)
       VALUES ($1, $2, $3, $4, $5, $6)
@@ -34,7 +60,7 @@ export const createTurno = async (req, res) => {
     const values = [
       paciente_id,
       fecha_hora,
-      duracion ? parseInt(duracion) : 30,  // Convertir a n�mero
+      duracion ? parseInt(duracion) : 30,  // Convertir a n�mero
       motivo || null,
       observaciones || null,  // Convertir "" a null
       estado || 'pendiente'
@@ -105,6 +131,13 @@ export const updateTurno = async (req, res) => {
   const { paciente_id, fecha_hora, duracion, estado, motivo, observaciones } = req.body;
   
   try {
+    const agendaException = await validateAgendaException(fecha_hora);
+    if (agendaException) {
+      return res.status(400).json({
+        error: `La agenda está bloqueada para el ${agendaException.fecha} (${agendaException.tipo}${agendaException.motivo ? `: ${agendaException.motivo}` : ""})`,
+      });
+    }
+
     const query = `
       UPDATE turnos SET 
         paciente_id = $1, 

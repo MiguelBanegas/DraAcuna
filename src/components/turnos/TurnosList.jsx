@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Table, Button, Form, InputGroup, Container, Row, Col, Card, Badge } from 'react-bootstrap';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaCheck, FaTimes, FaClock } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { useTurnos } from '../../context/TurnosContext';
 import { usePacientes } from '../../context/PacientesContext';
 import Swal from 'sweetalert2';
 import CalendarView from '../layout/CalendarView';
+import AgendaExcepcionesPanel from './AgendaExcepcionesPanel';
 import { matchTokensInFields, tokenizeSearch } from '../../utils/search';
 
 const TurnosList = () => {
@@ -17,6 +18,7 @@ const TurnosList = () => {
   const [filtroEstado, setFiltroEstado] = useState('');
   const [filtroPaciente, setFiltroPaciente] = useState('');
   const [pendingActionId, setPendingActionId] = useState(null);
+  const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
   const searchInputRef = useRef(null);
 
   // Auto-focus en el campo de búsqueda al cargar el componente
@@ -166,8 +168,10 @@ const TurnosList = () => {
 
       <div className="mb-5">
         <h4 className="mb-3 text-muted">Agenda Mensual</h4>
-        <CalendarView />
+        <CalendarView refreshKey={calendarRefreshKey} />
       </div>
+
+      <AgendaExcepcionesPanel onExceptionsChange={() => setCalendarRefreshKey((current) => current + 1)} />
 
       {/* Filtros */}
       <Card className="mb-3">
