@@ -8,9 +8,26 @@ const getHeaders = () => {
   };
 };
 
+const normalizeDateOnly = (value) => {
+  if (!value) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    return value.slice(0, 10);
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
 const mapExceptionFromAPI = (item) => ({
   id: item.id,
-  fecha: item.fecha,
+  fecha: normalizeDateOnly(item.fecha),
   tipo: item.tipo,
   motivo: item.motivo,
   horaInicio: item.hora_inicio,

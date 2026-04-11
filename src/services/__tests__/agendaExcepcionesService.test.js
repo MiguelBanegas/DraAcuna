@@ -23,7 +23,7 @@ describe('agendaExcepcionesService', () => {
       ok: true,
       json: async () => [{
         id: 1,
-        fecha: '2026-07-14',
+        fecha: '2026-07-14T03:00:00.000Z',
         tipo: 'vacaciones',
         motivo: 'Invierno',
         hora_inicio: null,

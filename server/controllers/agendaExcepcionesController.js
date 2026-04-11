@@ -24,6 +24,9 @@ const ensureAgendaExcepcionesTable = async () => {
 
 const normalizeExceptionRow = (row) => ({
   ...row,
+  fecha: row.fecha instanceof Date
+    ? `${row.fecha.getFullYear()}-${String(row.fecha.getMonth() + 1).padStart(2, '0')}-${String(row.fecha.getDate()).padStart(2, '0')}`
+    : String(row.fecha).slice(0, 10),
   bloquea_turnos: Boolean(row.bloquea_turnos),
 });
 
