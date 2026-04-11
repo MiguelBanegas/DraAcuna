@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Table, Button, Form, InputGroup, Container, Row, Col, Card, Badge } from 'react-bootstrap';
+import { Table, Button, Form, InputGroup, Container, Row, Col, Card, Badge, Pagination } from 'react-bootstrap';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaCheck, FaTimes, FaClock } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useTurnos } from '../../context/TurnosContext';
@@ -10,6 +10,7 @@ import AgendaExcepcionesPanel from './AgendaExcepcionesPanel';
 import { matchTokensInFields, tokenizeSearch } from '../../utils/search';
 
 const TurnosList = () => {
+  const PAGE_SIZE = 10;
   const navigate = useNavigate();
   const { turnos, eliminarTurno, cambiarEstadoTurno } = useTurnos();
   const { pacientes } = usePacientes();
@@ -19,6 +20,7 @@ const TurnosList = () => {
   const [filtroPaciente, setFiltroPaciente] = useState('');
   const [pendingActionId, setPendingActionId] = useState(null);
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const searchInputRef = useRef(null);
 
   // Auto-focus en el campo de búsqueda al cargar el componente
@@ -27,6 +29,10 @@ const TurnosList = () => {
       searchInputRef.current.focus();
     }
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filtroFecha, filtroEstado, filtroPaciente]);
 
   // Filtrar turnos
   const turnosFiltrados = turnos.filter(turno => {
@@ -63,7 +69,19 @@ const TurnosList = () => {
     const cumplePaciente = filtroPaciente === '' || turno.pacienteId === filtroPaciente;
     
     return cumpleBusqueda && cumpleFecha && cumpleEstado && cumplePaciente;
-  }).sort((a, b) => new Date(a.fechaHora) - new Date(b.fechaHora)); // Ordenar por fecha
+  }).sort((a, b) => new Date(b.fechaHora) - new Date(a.fechaHora));
+
+  const totalPages = Math.max(1, Math.ceil(turnosFiltrados.length / PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * PAGE_SIZE;
+  const endIndex = Math.min(startIndex + PAGE_SIZE, turnosFiltrados.length);
+  const turnosPaginados = turnosFiltrados.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    if (currentPage !== safeCurrentPage) {
+      setCurrentPage(safeCurrentPage);
+    }
+  }, [currentPage, safeCurrentPage]);
 
   const handleDelete = async (id, pacienteNombre) => {
     if (pendingActionId !== null) {
@@ -246,7 +264,10 @@ const TurnosList = () => {
       </Card>
 
       <Row className="mb-3">
-        <Col className="text-end">
+        <Col className="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+          <small className="text-muted">
+            Mostrando {turnosFiltrados.length === 0 ? 0 : startIndex + 1} a {endIndex} de {turnosFiltrados.length}
+          </small>
           <Badge bg="secondary" className="fs-6">
             {turnosFiltrados.length} turno{turnosFiltrados.length !== 1 ? 's' : ''}
           </Badge>
@@ -287,7 +308,7 @@ const TurnosList = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {turnosFiltrados.map((turno) => {
+                  {turnosPaginados.map((turno) => {
                     const paciente = pacientes.find(p => p.id === turno.pacienteId);
                     const IconoEstado = estadoIcono[turno.estado];
                     const isPendingRow = pendingActionId === turno.id;
@@ -374,6 +395,30 @@ const TurnosList = () => {
           )}
         </Card.Body>
       </Card>
+
+      {turnosFiltrados.length > PAGE_SIZE && (
+        <div className="d-flex justify-content-center mt-3">
+          <Pagination className="mb-0">
+            <Pagination.Prev
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              disabled={safeCurrentPage === 1}
+            />
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+              <Pagination.Item
+                key={page}
+                active={page === safeCurrentPage}
+                onClick={() => setCurrentPage(page)}
+              >
+                {page}
+              </Pagination.Item>
+            ))}
+            <Pagination.Next
+              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              disabled={safeCurrentPage === totalPages}
+            />
+          </Pagination>
+        </div>
+      )}
     </Container>
   );
 };
