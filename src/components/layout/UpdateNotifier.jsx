@@ -2,8 +2,8 @@ import { useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { FaSyncAlt } from 'react-icons/fa';
 import 'react-toastify/dist/ReactToastify.css';
+import { APP_VERSION } from '../../version';
 
-const VERSION_STORAGE_KEY = 'dra-acuna-version';
 const RELOAD_GUARD_KEY = 'dra-acuna-version-reload';
 
 const UpdateNotifier = () => {
@@ -17,20 +17,17 @@ const UpdateNotifier = () => {
       
       const data = await response.json();
       const newVersion = data.version;
-      const storedVersion = localStorage.getItem(VERSION_STORAGE_KEY);
       const reloadGuardVersion = sessionStorage.getItem(RELOAD_GUARD_KEY);
 
       if (isFirstFetch.current) {
-        if (storedVersion && newVersion !== storedVersion && reloadGuardVersion !== newVersion) {
-          localStorage.setItem(VERSION_STORAGE_KEY, newVersion);
+        if (newVersion !== APP_VERSION && reloadGuardVersion !== newVersion) {
           sessionStorage.setItem(RELOAD_GUARD_KEY, newVersion);
           window.location.reload();
           return;
         }
 
-        localStorage.setItem(VERSION_STORAGE_KEY, newVersion);
         sessionStorage.removeItem(RELOAD_GUARD_KEY);
-        versionRef.current = newVersion;
+        versionRef.current = APP_VERSION;
         isFirstFetch.current = false;
       } else if (versionRef.current && newVersion !== versionRef.current) {
         console.log(`¡Nueva versión detectada! ${versionRef.current} -> ${newVersion}`);
@@ -60,7 +57,6 @@ const UpdateNotifier = () => {
             }
           );
         }
-        localStorage.setItem(VERSION_STORAGE_KEY, newVersion);
         versionRef.current = newVersion;
       }
     } catch (error) {
