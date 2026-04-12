@@ -143,7 +143,7 @@ const HistoriaClinicaForm = () => {
             <Row className="bg-light p-3 rounded mx-0">
               <Col md={6}>
                 <h6 className="text-uppercase text-muted small fw-bold">Datos del Paciente</h6>
-                <p className="mb-1"><strong>Nombre:</strong> {paciente.nombreCompleto}</p>
+                <p className="mb-1"><strong>Nombre:</strong> {paciente.apellido ? `${paciente.apellido}, ${paciente.nombre}` : paciente.nombreCompleto}</p>
                 <p className="mb-1"><strong>DNI:</strong> {paciente.dni}</p>
                 <p className="mb-0"><strong>Obra Social:</strong> {paciente.obraSocial || 'Particular'} {paciente.numeroAfiliado ? `(${paciente.numeroAfiliado})` : ''}</p>
               </Col>

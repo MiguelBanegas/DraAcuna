@@ -158,7 +158,9 @@ const ConsultasList = () => {
               >
                 <option value="">Todos los pacientes</option>
                 {pacientes.map(p => (
-                  <option key={p.id} value={p.id}>{p.nombreCompleto}</option>
+                  <option key={p.id} value={p.id}>
+                    {p.apellido ? `${p.apellido}, ${p.nombre}` : p.nombreCompleto}
+                  </option>
                 ))}
               </Form.Select>
             </Col>
@@ -236,7 +238,7 @@ const ConsultasList = () => {
                 </thead>
                 <tbody>
                   {consultas.map((consulta) => {
-                    const paciente = pacientes.find(p => p.id === consulta.pacienteId);
+                    const paciente = pacientes.find(p => p.id == consulta.pacienteId);
                     return (
                       <tr key={consulta.id}>
                         <td>
@@ -245,7 +247,7 @@ const ConsultasList = () => {
                         <td>
                           {paciente ? (
                             <>
-                              {paciente.nombreCompleto}
+                              {paciente.apellido ? `${paciente.apellido}, ${paciente.nombre}` : paciente.nombreCompleto}
                               <br />
                               <small className="text-muted">DNI: {paciente.dni}</small>
                             </>
@@ -278,7 +280,10 @@ const ConsultasList = () => {
                             <Button
                               variant="outline-danger"
                               size="sm"
-                              onClick={() => handleDelete(consulta.id, paciente?.nombreCompleto || 'paciente')}
+                              onClick={() => handleDelete(
+                                consulta.id, 
+                                paciente ? (paciente.apellido ? `${paciente.apellido}, ${paciente.nombre}` : paciente.nombreCompleto) : 'paciente'
+                              )}
                               title="Eliminar"
                               disabled={pendingActionId !== null}
                             >

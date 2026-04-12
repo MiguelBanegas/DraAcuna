@@ -51,7 +51,9 @@ const TurnosDiaModal = ({ show, onHide, fecha, turnos }) => {
                           {turno.estado}
                         </Badge>
                       </div>
-                      <div className="text-dark fw-bold">{paciente?.nombreCompleto || 'Paciente no encontrado'}</div>
+                      <div className="text-dark fw-bold">
+                        {paciente ? (paciente.apellido ? `${paciente.apellido}, ${paciente.nombre}` : paciente.nombreCompleto) : 'Paciente no encontrado'}
+                      </div>
                       <small className="text-muted d-block">{turno.motivo}</small>
                       {paciente?.telefono && (
                         <small className="text-muted">Tel: {paciente.telefono}</small>

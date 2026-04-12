@@ -190,7 +190,7 @@ const HistoriaClinicaDetalle = () => {
                 <Col xs={7} style={{ borderRight: '1px solid #dee2e6' }}>
                   <h6 className="text-uppercase text-muted mb-2" style={{ fontSize: '0.7rem', letterSpacing: '1px' }}>Datos del Paciente</h6>
                   <div style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
-                    <p className="mb-1"><strong>Nombre:</strong> {paciente.nombreCompleto}</p>
+                    <p className="mb-1"><strong>Nombre:</strong> {paciente.apellido ? `${paciente.apellido}, ${paciente.nombre}` : paciente.nombreCompleto}</p>
                     <div className="d-flex gap-3">
                       <p className="mb-1"><strong>DNI:</strong> {paciente.dni}</p>
                       <p className="mb-1"><strong>Edad:</strong> {calcularEdadDesdeFecha(paciente.fechaNacimiento)} años</p>

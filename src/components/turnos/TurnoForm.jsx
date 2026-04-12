@@ -91,7 +91,7 @@ const TurnoForm = () => {
   const pacientesDisponibles = pacientesActivos.filter((p) => p.activo !== false || p.id === formData.pacienteId);
   const pacientesOptions = pacientesDisponibles.map(p => ({
     value: p.id,
-    label: `${p.nombreCompleto} - DNI: ${p.dni}`,
+    label: `${p.apellido ? `${p.apellido}, ${p.nombre}` : p.nombreCompleto} - DNI: ${p.dni}`,
     paciente: p
   }));
 
@@ -113,10 +113,10 @@ const TurnoForm = () => {
           // try to set pacienteOption for AsyncSelect
           const found = pacientes.find(p => p.id === turno.pacienteId);
           if (found) {
-            setPacienteOption({ value: found.id, label: `${found.nombreCompleto} - DNI: ${found.dni}`, paciente: found });
+            setPacienteOption({ value: found.id, label: `${found.apellido ? `${found.apellido}, ${found.nombre}` : found.nombreCompleto} - DNI: ${found.dni}`, paciente: found });
           } else if (turno.pacienteId) {
             getPacienteById(turno.pacienteId).then(p => {
-              setPacienteOption({ value: p.id, label: `${p.nombreCompleto} - DNI: ${p.dni}`, paciente: p });
+              setPacienteOption({ value: p.id, label: `${p.apellido ? `${p.apellido}, ${p.nombre}` : p.nombreCompleto} - DNI: ${p.dni}`, paciente: p });
             }).catch(err => console.error('Error cargando paciente:', err));
           }
           initializedRef.current = true;
@@ -221,7 +221,11 @@ const TurnoForm = () => {
         if (!inputValue) return resolve([]);
         try {
           const results = await searchPacientes(inputValue, 30);
-          const options = results.map(p => ({ value: p.id, label: `${p.nombreCompleto} - DNI: ${p.dni}`, paciente: p }));
+          const options = results.map(p => ({ 
+            value: p.id, 
+            label: `${p.apellido ? `${p.apellido}, ${p.nombre}` : p.nombreCompleto} - DNI: ${p.dni}`, 
+            paciente: p 
+          }));
           resolve(options);
         } catch (err) {
           console.error(err);
@@ -446,7 +450,7 @@ const TurnoForm = () => {
 
             {pacienteSeleccionado && (
               <div className="alert alert-info py-2 px-3 mb-3">
-                <strong>Paciente:</strong> {pacienteSeleccionado.nombreCompleto}
+                <strong>Paciente:</strong> {pacienteSeleccionado.apellido ? `${pacienteSeleccionado.apellido}, ${pacienteSeleccionado.nombre}` : pacienteSeleccionado.nombreCompleto}
                 {pacienteSeleccionado.telefono && (
                   <> - Tel: {pacienteSeleccionado.telefono}</>
                 )}

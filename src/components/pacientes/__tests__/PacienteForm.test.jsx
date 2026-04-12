@@ -36,7 +36,8 @@ describe('PacienteForm', () => {
       pacientes: [
         {
           id: 1,
-          nombreCompleto: 'Ana Perez',
+          nombre: 'Ana',
+          apellido: 'Perez',
           dni: '12345678',
           fechaNacimiento: '1990-05-14T00:00:00.000Z',
           genero: 'Femenino',
@@ -52,7 +53,8 @@ describe('PacienteForm', () => {
       pacientesActivos: [
         {
           id: 1,
-          nombreCompleto: 'Ana Perez',
+          nombre: 'Ana',
+          apellido: 'Perez',
           dni: '12345678',
           activo: true,
         },
@@ -81,7 +83,8 @@ describe('PacienteForm', () => {
       pacientes: [
         {
           id: 1,
-          nombreCompleto: 'Ana Perez',
+          nombre: 'Ana',
+          apellido: 'Perez',
           dni: '12345678',
           activo: true,
         },
@@ -89,7 +92,8 @@ describe('PacienteForm', () => {
       pacientesActivos: [
         {
           id: 1,
-          nombreCompleto: 'Ana Perez',
+          nombre: 'Ana',
+          apellido: 'Perez',
           dni: '12345678',
           activo: true,
         },
@@ -106,7 +110,7 @@ describe('PacienteForm', () => {
 
     expect(await screen.findByText('Ya existe un paciente registrado con ese DNI')).toBeInTheDocument();
     expect(screen.getByText(/Ya existe el paciente:/i)).toBeInTheDocument();
-    expect(screen.getByText('Ana Perez')).toBeInTheDocument();
+    expect(screen.getByText(/Perez, Ana/i)).toBeInTheDocument();
   });
 
   it('bloquea envíos repetidos mientras el paciente se está guardando', async () => {
@@ -126,8 +130,11 @@ describe('PacienteForm', () => {
 
     render(<PacienteForm />);
 
-    fireEvent.change(document.querySelector('input[name="nombreCompleto"]'), {
+    fireEvent.change(document.querySelector('input[name="nombre"]'), {
       target: { value: 'Juan Perez' },
+    });
+    fireEvent.change(document.querySelector('input[name="apellido"]'), {
+      target: { value: 'Perez' },
     });
     fireEvent.change(document.querySelector('input[name="dni"]'), {
       target: { value: '12345678' },

@@ -29,7 +29,8 @@ const PacienteForm = () => {
   const { pacientes, agregarPaciente, actualizarPaciente } = usePacientes();
   
   const [formData, setFormData] = useState({
-    nombreCompleto: '',
+    nombre: '',
+    apellido: '',
     dni: '',
     fechaNacimiento: '',
     genero: '',
@@ -42,7 +43,6 @@ const PacienteForm = () => {
   });
 
   const [errors, setErrors] = useState({});
-  const [submitError, setSubmitError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [pacienteExistentePorDni, setPacienteExistentePorDni] = useState(null);
@@ -71,8 +71,24 @@ const PacienteForm = () => {
         // Deferir setState para evitar setState síncrono en el efecto
         Promise.resolve().then(() => {
           setIsEditing(true);
+
+          // Lógica de migración inteligente para registros viejos
+          let nombre = paciente.nombre || '';
+          let apellido = paciente.apellido || '';
+          
+          if (!nombre && !apellido && paciente.nombreCompleto) {
+            const partes = paciente.nombreCompleto.trim().split(' ');
+            if (partes.length > 1) {
+              apellido = partes.pop(); // Tomamos la última palabra como apellido
+              nombre = partes.join(' ');
+            } else {
+              nombre = partes[0];
+            }
+          }
+
           setFormData({
-            nombreCompleto: paciente.nombreCompleto || '',
+            nombre: nombre,
+            apellido: apellido,
             dni: paciente.dni || '',
             fechaNacimiento: formatDateForInput(paciente.fechaNacimiento),
             genero: paciente.genero || '',
@@ -84,7 +100,7 @@ const PacienteForm = () => {
             fechaCreacion: formatDateTimeForDisplay(paciente.fechaCreacion)
           });
         });
-      } else {
+      } else if (pacientes.length > 0) {
         navigate('/pacientes');
       }
     }
@@ -139,8 +155,11 @@ const PacienteForm = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.nombreCompleto.trim()) {
-      newErrors.nombreCompleto = 'El nombre completo es requerido';
+    if (!formData.nombre.trim()) {
+      newErrors.nombre = 'El nombre es requerido';
+    }
+    if (!formData.apellido.trim()) {
+      newErrors.apellido = 'El apellido es requerido';
     }
 
     if (!formData.dni.trim()) {
@@ -188,7 +207,6 @@ const PacienteForm = () => {
     if (submitting) {
       return;
     }
-    setSubmitError('');
 
     if (!validateForm()) {
       return;
@@ -196,10 +214,16 @@ const PacienteForm = () => {
 
     try {
       setSubmitting(true);
+
+      const dataToSubmit = {
+        ...formData,
+        nombreCompleto: `${formData.nombre.trim()} ${formData.apellido.trim()}`.trim()
+      };
+
       if (isEditing) {
-        await actualizarPaciente(id, formData);
+        await actualizarPaciente(id, dataToSubmit);
       } else {
-        await agregarPaciente(formData);
+        await agregarPaciente(dataToSubmit);
       }
       
       await Swal.fire({
@@ -213,7 +237,6 @@ const PacienteForm = () => {
       navigate('/pacientes');
     } catch (error) {
       console.error('Error al guardar paciente:', error);
-      setSubmitError('Error al guardar el paciente. Por favor, intente nuevamente.');
       Swal.fire('Error', 'No se pudo guardar el paciente', 'error');
     } finally {
       setSubmitting(false);
@@ -262,25 +285,42 @@ const PacienteForm = () => {
               </Row>
             )}
             <Row>
-              <Col md={6}>
+              <Col md={4}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Nombre Completo *</Form.Label>
+                  <Form.Label>Apellido/s *</Form.Label>
                   <Form.Control
                     ref={firstInputRef}
                     type="text"
-                    name="nombreCompleto"
-                    value={formData.nombreCompleto}
+                    name="apellido"
+                    value={formData.apellido}
                     onChange={handleChange}
-                    isInvalid={!!errors.nombreCompleto}
-                    placeholder="Ej: Juan Pérez"
+                    isInvalid={!!errors.apellido}
+                    placeholder="Ej: Pérez"
                   />
                   <Form.Control.Feedback type="invalid">
-                    {errors.nombreCompleto}
+                    {errors.apellido}
                   </Form.Control.Feedback>
                 </Form.Group>
               </Col>
 
-              <Col md={6}>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Nombre/s *</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="nombre"
+                    value={formData.nombre}
+                    onChange={handleChange}
+                    isInvalid={!!errors.nombre}
+                    placeholder="Ej: Juan"
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.nombre}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+
+              <Col md={4}>
                 <Form.Group className="mb-3">
                   <Form.Label>DNI *</Form.Label>
                   <Form.Control
@@ -298,7 +338,7 @@ const PacienteForm = () => {
                   </Form.Control.Feedback>
                   {pacienteExistentePorDni && (
                     <Form.Text className="text-warning">
-                      Ya existe el paciente: <strong>{pacienteExistentePorDni.nombreCompleto}</strong>
+                      Ya existe el paciente: <strong>{pacienteExistentePorDni.apellido ? `${pacienteExistentePorDni.apellido}, ${pacienteExistentePorDni.nombre}` : pacienteExistentePorDni.nombreCompleto}</strong>
                     </Form.Text>
                   )}
                 </Form.Group>

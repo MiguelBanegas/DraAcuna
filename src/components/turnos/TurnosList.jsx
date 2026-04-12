@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Table, Button, Form, InputGroup, Container, Row, Col, Card, Badge, Pagination } from 'react-bootstrap';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaCheck, FaTimes, FaClock } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaCheck, FaTimes, FaClock, FaCheckDouble } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useTurnos } from '../../context/TurnosContext';
 import { usePacientes } from '../../context/PacientesContext';
@@ -36,15 +36,16 @@ const TurnosList = () => {
 
   // Filtrar turnos
   const turnosFiltrados = turnos.filter(turno => {
-    const paciente = pacientes.find(p => p.id === turno.pacienteId);
-    const nombrePaciente = paciente?.nombreCompleto || '';
+    // Usamos == para evitar problemas de tipos string/number en los IDs
+    const paciente = pacientes.find(p => p.id == turno.pacienteId);
+    const nombrePaciente = paciente ? (paciente.apellido ? `${paciente.apellido}, ${paciente.nombre}` : paciente.nombreCompleto) : '';
     const dniPaciente = paciente?.dni || '';
 
     const tokens = tokenizeSearch(searchTerm);
     const cumpleBusqueda = matchTokensInFields(tokens, [
       nombrePaciente,
       dniPaciente,
-      turno.motivo,
+      turno.motivo || '',
     ]);
     
     // Comparar solo la fecha sin la hora
@@ -66,7 +67,7 @@ const TurnosList = () => {
     
     const cumpleEstado = filtroEstado === '' || turno.estado === filtroEstado;
     
-    const cumplePaciente = filtroPaciente === '' || turno.pacienteId === filtroPaciente;
+    const cumplePaciente = filtroPaciente === '' || String(turno.pacienteId) === String(filtroPaciente);
     
     return cumpleBusqueda && cumpleFecha && cumpleEstado && cumplePaciente;
   }).sort((a, b) => new Date(b.fechaHora) - new Date(a.fechaHora));
@@ -163,7 +164,7 @@ const TurnosList = () => {
     pendiente: FaClock,
     confirmado: FaCheck,
     cancelado: FaTimes,
-    completado: FaCheck
+    completado: FaCheckDouble
   };
 
   return (
@@ -216,7 +217,9 @@ const TurnosList = () => {
               >
                 <option value="">Todos los pacientes</option>
                 {pacientes.map(p => (
-                  <option key={p.id} value={p.id}>{p.nombreCompleto}</option>
+                  <option key={p.id} value={p.id}>
+                    {p.apellido ? `${p.apellido}, ${p.nombre}` : p.nombreCompleto}
+                  </option>
                 ))}
               </Form.Select>
             </Col>
@@ -309,7 +312,7 @@ const TurnosList = () => {
                 </thead>
                 <tbody>
                   {turnosPaginados.map((turno) => {
-                    const paciente = pacientes.find(p => p.id === turno.pacienteId);
+                    const paciente = pacientes.find(p => p.id == turno.pacienteId);
                     const IconoEstado = estadoIcono[turno.estado];
                     const isPendingRow = pendingActionId === turno.id;
                     return (
@@ -320,7 +323,7 @@ const TurnosList = () => {
                         <td>
                           {paciente ? (
                             <>
-                              {paciente.nombreCompleto}
+                              {paciente.apellido ? `${paciente.apellido}, ${paciente.nombre}` : paciente.nombreCompleto}
                               <br />
                               <small className="text-muted">{paciente.telefono}</small>
                             </>
@@ -346,7 +349,11 @@ const TurnosList = () => {
                                 title="Confirmar"
                                 disabled={pendingActionId !== null}
                               >
-                                <FaCheck />
+                                {isPendingRow ? (
+                                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                ) : (
+                                  <FaCheck />
+                                )}
                               </Button>
                             )}
                             {(turno.estado === 'pendiente' || turno.estado === 'confirmado') && (
@@ -357,7 +364,11 @@ const TurnosList = () => {
                                 title="Marcar como completado"
                                 disabled={pendingActionId !== null}
                               >
-                                <FaCheck />
+                                {isPendingRow ? (
+                                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                ) : (
+                                  <FaCheckDouble />
+                                )}
                               </Button>
                             )}
                             <Button
@@ -372,17 +383,18 @@ const TurnosList = () => {
                             <Button
                               variant="outline-danger"
                               size="sm"
-                              onClick={() => {
-                                if (turno.estado !== 'cancelado') {
-                                  handleCambiarEstado(turno.id, 'cancelado');
-                                } else {
-                                  handleDelete(turno.id, paciente?.nombreCompleto || 'paciente');
-                                }
-                              }}
-                              title={turno.estado !== 'cancelado' ? 'Cancelar' : 'Eliminar'}
+                              onClick={() => handleDelete(
+                                turno.id, 
+                                paciente ? (paciente.apellido ? `${paciente.apellido}, ${paciente.nombre}` : paciente.nombreCompleto) : 'paciente'
+                              )}
+                              title="Eliminar"
                               disabled={pendingActionId !== null}
                             >
-                              {isPendingRow ? <FaClock /> : <FaTrash />}
+                              {pendingActionId === turno.id ? (
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                              ) : (
+                                <FaTrash />
+                              )}
                             </Button>
                           </div>
                         </td>
@@ -396,26 +408,22 @@ const TurnosList = () => {
         </Card.Body>
       </Card>
 
-      {turnosFiltrados.length > PAGE_SIZE && (
-        <div className="d-flex justify-content-center mt-3">
-          <Pagination className="mb-0">
-            <Pagination.Prev
-              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-              disabled={safeCurrentPage === 1}
-            />
-            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+      {totalPages > 1 && (
+        <div className="d-flex justify-content-center mt-4">
+          <Pagination>
+            <Pagination.First onClick={() => setCurrentPage(1)} disabled={safeCurrentPage === 1} />
+            <Pagination.Prev onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={safeCurrentPage === 1} />
+            {[...Array(totalPages).keys()].map(number => (
               <Pagination.Item
-                key={page}
-                active={page === safeCurrentPage}
-                onClick={() => setCurrentPage(page)}
+                key={number + 1}
+                active={number + 1 === safeCurrentPage}
+                onClick={() => setCurrentPage(number + 1)}
               >
-                {page}
+                {number + 1}
               </Pagination.Item>
             ))}
-            <Pagination.Next
-              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-              disabled={safeCurrentPage === totalPages}
-            />
+            <Pagination.Next onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={safeCurrentPage === totalPages} />
+            <Pagination.Last onClick={() => setCurrentPage(totalPages)} disabled={safeCurrentPage === totalPages} />
           </Pagination>
         </div>
       )}
