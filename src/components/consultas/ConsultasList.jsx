@@ -157,7 +157,12 @@ const ConsultasList = () => {
                 onChange={(e) => setFiltroPaciente(e.target.value)}
               >
                 <option value="">Todos los pacientes</option>
-                {pacientes.map(p => (
+                {[...pacientes].sort((a, b) => {
+                  const nameA = a.apellido ? `${a.apellido}, ${a.nombre}` : a.nombreCompleto;
+                  const nameB = b.apellido ? `${b.apellido}, ${b.nombre}` : b.nombreCompleto;
+                  return (nameA || '').localeCompare(nameB || '');
+                })
+                .map(p => (
                   <option key={p.id} value={p.id}>
                     {p.apellido ? `${p.apellido}, ${p.nombre}` : p.nombreCompleto}
                   </option>

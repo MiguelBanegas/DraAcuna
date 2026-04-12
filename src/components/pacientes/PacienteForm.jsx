@@ -23,6 +23,17 @@ const formatDateTimeForDisplay = (value) => {
   return parsed.toISOString();
 };
 
+// Función auxiliar para capitalizar la primera letra de cada palabra
+const capitalizeEachWord = (text) => {
+  if (!text) return '';
+  return text
+    .toLowerCase() // Primero todo a minúsculas para un control uniforme
+    .split(' ')    // Divide por espacios
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitaliza cada palabra
+    .join(' ');    // Une de nuevo con espacios
+};
+
+
 const PacienteForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -117,7 +128,10 @@ const PacienteForm = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: 
+        name === 'nombre' || name === 'apellido'
+          ? capitalizeEachWord(value)
+          : value
     }));
     // Limpiar error del campo
     if (errors[name]) {

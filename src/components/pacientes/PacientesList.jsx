@@ -114,12 +114,26 @@ const PacientesList = () => {
     });
   })();
 
-  // Separar activos/archivados y ordenar alfabéticamente
+  // Helper para obtener el nombre en formato "Apellido, Nombre" para mostrar y ordenar
+  const getFormatName = (p) => {
+    if (p.apellido) {
+      return `${p.apellido}${p.nombre ? `, ${p.nombre}` : ''}`;
+    }
+    if (!p.nombreCompleto) return '';
+    
+    // Intento de extraer el apellido de nombreCompleto para registros legacy
+    const partes = p.nombreCompleto.trim().split(/\s+/);
+    if (partes.length > 1) {
+      const apellido = partes.pop();
+      const nombre = partes.join(' ');
+      return `${apellido}, ${nombre}`;
+    }
+    return p.nombreCompleto;
+  };
+
   const normalizeName = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const sortByName = (a, b) => {
-    const nameA = a.apellido ? `${a.apellido}, ${a.nombre}` : a.nombreCompleto;
-    const nameB = b.apellido ? `${b.apellido}, ${b.nombre}` : b.nombreCompleto;
-    return normalizeName(nameA).localeCompare(normalizeName(nameB));
+    return normalizeName(getFormatName(a)).localeCompare(normalizeName(getFormatName(b)));
   };
 
   const activeList = listaMostrar.filter((p) => p.activo !== false).sort(sortByName);
@@ -224,7 +238,7 @@ const PacientesList = () => {
                     <tr key={paciente.id}>
                       <td>
                         <strong>
-                          {paciente.apellido ? `${paciente.apellido}, ${paciente.nombre}` : paciente.nombreCompleto}
+                          {getFormatName(paciente)}
                         </strong>
                         {paciente.activo === false && (
                           <Badge bg="secondary" className="ms-2">Archivado</Badge>
@@ -247,7 +261,7 @@ const PacientesList = () => {
                       <td>
                         <div className="d-flex gap-2 justify-content-center">
                           {(() => {
-                            const nombreFmt = paciente.apellido ? `${paciente.apellido}, ${paciente.nombre}` : paciente.nombreCompleto;
+                            const nombreFmt = getFormatName(paciente);
                             return (
                               <>
                           <Button
@@ -342,7 +356,7 @@ const PacientesList = () => {
                         <tr key={paciente.id}>
                           <td>
                             <strong>
-                              {paciente.apellido ? `${paciente.apellido}, ${paciente.nombre}` : paciente.nombreCompleto}
+                              {getFormatName(paciente)}
                             </strong>
                             <Badge bg="secondary" className="ms-2">Archivado</Badge>
                             <br />
@@ -383,7 +397,7 @@ const PacientesList = () => {
                               <Button
                                 variant="outline-success"
                                 size="sm"
-                              onClick={() => handleReactivate(paciente.id, paciente.apellido ? `${paciente.apellido}, ${paciente.nombre}` : paciente.nombreCompleto)}
+                              onClick={() => handleReactivate(paciente.id, getFormatName(paciente))}
                                 title="Reactivar"
                                 disabled={pendingActionId !== null}
                               >
