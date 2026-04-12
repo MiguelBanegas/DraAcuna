@@ -1,5 +1,5 @@
 import { Container, Row, Col, Card, Button, Badge } from 'react-bootstrap';
-import { FaStethoscope, FaMapMarkerAlt, FaClock, FaPhoneAlt, FaUserMd, FaHeartbeat, FaCalendarCheck, FaClinicMedical, FaMedkit, FaMicroscope } from 'react-icons/fa';
+import { FaHeartbeat, FaMedkit, FaMicroscope } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import AppVersionBadge from '../layout/AppVersionBadge';
 
@@ -97,41 +97,6 @@ const PublicHome = () => {
           ))}
         </Row>
       </Container>
-
-      {/* Info & Contact Info Section */}
-      <section className="bg-white py-section shadow-sm border-top border-bottom">
-        <Container>
-          <Row className="g-5 justify-content-center text-center">
-            <Col md={4}>
-              <div className="hover-up transition-all p-3">
-                <div className="bg-primary text-white p-3 rounded-4 shadow-sm d-inline-block mb-3">
-                  <FaMapMarkerAlt size={28} />
-                </div>
-                <h5 className="fw-bold">Visítenos</h5>
-                <p className="text-muted small">Av. Principal 1234, Consultorio 5<br />Recoleta, Buenos Aires</p>
-              </div>
-            </Col>
-            <Col md={4}>
-              <div className="hover-up transition-all p-3">
-                <div className="bg-primary text-white p-3 rounded-4 shadow-sm d-inline-block mb-3">
-                  <FaClock size={28} />
-                </div>
-                <h5 className="fw-bold">Nuestros Horarios</h5>
-                <p className="text-muted small">Lunes a Viernes: 08:00 - 20:00<br />Sábados por la mañana</p>
-              </div>
-            </Col>
-            <Col md={4}>
-              <div className="hover-up transition-all p-3">
-                <div className="bg-primary text-white p-3 rounded-4 shadow-sm d-inline-block mb-3">
-                  <FaPhoneAlt size={28} />
-                </div>
-                <h5 className="fw-bold">Contacto Directo</h5>
-                <p className="text-muted small">Tel: (011) 4567-8910<br />consultas@draacuna.com.ar</p>
-              </div>
-            </Col>
-          </Row>
-        </Container>
-      </section>
 
       {/* Footer Minimalista */}
       <footer className="py-5 bg-white text-center">
