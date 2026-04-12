@@ -198,11 +198,13 @@ const HistoriaClinicaForm = () => {
                 className="mb-3"
                 disabled={submitting}
               />
+              {submitError && (
+                <div className="alert alert-danger" role="alert">{submitError}</div>
+              )}
               <div className="text-end">
-                <Button 
-                  variant="primary" 
+                <Button
+                  variant="primary"
                   onClick={handleSubmit}
-                  disabled={!observaciones.trim() || submitting}
                   disabled={pacienteArchivado || !observaciones.trim() || submitting}
                   className="d-inline-flex align-items-center gap-2"
                 >
