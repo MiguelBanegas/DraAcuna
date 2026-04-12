@@ -287,18 +287,19 @@ const TurnoForm = () => {
       return;
     }
 
+    let formToSubmit = null;
     try {
       setSubmitting(true);
-      const turnoData = {
+      formToSubmit = {
         ...formData,
         fechaHora: new Date(formData.fechaHora).toISOString(),
         duracion: parseInt(formData.duracion)
       };
 
       if (isEditing) {
-        await actualizarTurno(id, turnoData);
+        await actualizarTurno(id, formToSubmit);
       } else {
-        await agregarTurno(turnoData);
+        await agregarTurno(formToSubmit);
       }
 
       await Swal.fire({
@@ -311,7 +312,45 @@ const TurnoForm = () => {
 
       navigate('/turnos');
     } catch (error) {
-      if (error.message.includes('superposición') || error.message.includes('Ya existe')) {
+      // Si el backend devolvió detalles de conflicto, mostrar información más específica
+      if (error && error.conflict) {
+        const c = error.conflict;
+        let fechaStr = c.fecha_hora;
+        try {
+          fechaStr = new Date(c.fecha_hora).toLocaleString();
+        } catch {
+          // ignore
+        }
+        const result = await Swal.fire({
+          title: 'Conflicto de Horario',
+          html: `El horario seleccionado se superpone con un turno existente de <strong>${c.paciente_nombre}</strong> el <strong>${fechaStr}</strong> (duración: ${c.duracion} min).<br>¿Desea forzar la creación del turno de todos modos?`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Forzar creación',
+          cancelButtonText: 'Cancelar',
+        });
+
+        if (result.isConfirmed) {
+          // Reintentar forzando la creación/actualización
+          const turnoDataForce = { ...formToSubmit, force: true };
+          try {
+            setSubmitting(true);
+            if (isEditing) {
+              await actualizarTurno(id, turnoDataForce);
+            } else {
+              await agregarTurno(turnoDataForce);
+            }
+            await Swal.fire({ title: '¡Guardado!', text: isEditing ? 'El turno ha sido actualizado.' : 'El turno ha sido programado.', icon: 'success', timer: 2000, showConfirmButton: false });
+            navigate('/turnos');
+            return;
+          } catch (err2) {
+            console.error('Error al forzar turno:', err2);
+            Swal.fire('Error', 'No se pudo forzar el guardado del turno. Intente nuevamente.', 'error');
+          } finally {
+            setSubmitting(false);
+          }
+        }
+      } else if (error.message && (error.message.includes('superpone') || error.message.includes('Ya existe'))) {
         Swal.fire('Conflicto de Horario', 'Ya existe un turno en ese horario. Por favor, elija otro horario.', 'warning');
       } else {
         Swal.fire('Error', 'No se pudo guardar el turno. Por favor, intente nuevamente.', 'error');

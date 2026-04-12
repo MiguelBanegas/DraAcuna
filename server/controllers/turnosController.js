@@ -68,6 +68,32 @@ export const createTurno = async (req, res) => {
       });
     }
 
+    // Validar solapamiento: comprobar si existe otro turno cuyo intervalo se superponga
+    const dur = duracion ? parseInt(duracion, 10) : 30;
+    const startDate = new Date(fecha_hora);
+    if (Number.isNaN(startDate.getTime())) {
+      return res.status(400).json({ error: 'Fecha/hora inválida' });
+    }
+    const endDate = new Date(startDate.getTime() + dur * 60000);
+
+    const { rows: overlapping } = await db.query(
+      `SELECT t.*, p.nombre_completo as paciente_nombre
+       FROM turnos t
+       JOIN pacientes p ON t.paciente_id = p.id
+       WHERE t.fecha_hora < $1
+         AND (t.fecha_hora + (t.duracion * interval '1 minute')) > $2
+       LIMIT 1`,
+      [endDate.toISOString(), startDate.toISOString()]
+    );
+
+    if (overlapping.length > 0 && !req.body.force) {
+      const existing = overlapping[0];
+      return res.status(409).json({
+        error: 'El horario seleccionado se superpone con otro turno existente',
+        conflict: { id: existing.id, paciente_nombre: existing.paciente_nombre, fecha_hora: existing.fecha_hora, duracion: existing.duracion }
+      });
+    }
+
     const query = `
       INSERT INTO turnos (paciente_id, fecha_hora, duracion, motivo, observaciones, estado)
       VALUES ($1, $2, $3, $4, $5, $6)
@@ -156,6 +182,33 @@ export const updateTurno = async (req, res) => {
     if (agendaException) {
       return res.status(400).json({
         error: `La agenda está bloqueada para el ${agendaException.fecha} (${agendaException.tipo}${agendaException.motivo ? `: ${agendaException.motivo}` : ""})`,
+      });
+    }
+
+    // Validar solapamiento al actualizar (excluir el propio turno)
+    const durUp = duracion ? parseInt(duracion, 10) : 30;
+    const startUp = new Date(fecha_hora);
+    if (Number.isNaN(startUp.getTime())) {
+      return res.status(400).json({ error: 'Fecha/hora inválida' });
+    }
+    const endUp = new Date(startUp.getTime() + durUp * 60000);
+
+    const { rows: overlappingUp } = await db.query(
+      `SELECT t.*, p.nombre_completo as paciente_nombre
+       FROM turnos t
+       JOIN pacientes p ON t.paciente_id = p.id
+       WHERE t.id <> $3
+         AND t.fecha_hora < $1
+         AND (t.fecha_hora + (t.duracion * interval '1 minute')) > $2
+       LIMIT 1`,
+      [endUp.toISOString(), startUp.toISOString(), id]
+    );
+
+    if (overlappingUp.length > 0 && !req.body.force) {
+      const existing = overlappingUp[0];
+      return res.status(409).json({
+        error: 'El horario seleccionado se superpone con otro turno existente',
+        conflict: { id: existing.id, paciente_nombre: existing.paciente_nombre, fecha_hora: existing.fecha_hora, duracion: existing.duracion }
       });
     }
 

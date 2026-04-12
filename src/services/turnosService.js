@@ -27,6 +27,7 @@ const mapTurnoToAPI = (t) => ({
   estado: t.estado,
   motivo: t.motivo,
   observaciones: t.observaciones,
+  force: t.force === true
 });
 
 export const getAllTurnos = async (fechaInicio, fechaFin) => {
@@ -54,7 +55,9 @@ export const createTurno = async (turno) => {
     });
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || "Error al crear turno");
+      const err = new Error(errorData.error || "Error al crear turno");
+      if (errorData.conflict) err.conflict = errorData.conflict;
+      throw err;
     }
     const data = await response.json();
     return mapTurnoFromAPI(data);
@@ -73,7 +76,9 @@ export const updateTurno = async (id, turno) => {
     });
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || "Error al actualizar turno");
+      const err = new Error(errorData.error || "Error al actualizar turno");
+      if (errorData.conflict) err.conflict = errorData.conflict;
+      throw err;
     }
     const data = await response.json();
     return mapTurnoFromAPI(data);
