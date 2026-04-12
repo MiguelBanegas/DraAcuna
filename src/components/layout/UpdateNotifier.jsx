@@ -41,7 +41,7 @@ const UpdateNotifier = () => {
               </div>
               <button 
                 className="btn btn-primary btn-sm d-flex align-items-center justify-content-center gap-2"
-                onClick={() => window.location.reload(true)}
+                onClick={() => window.location.reload()}
               >
                 <FaSyncAlt /> Actualizar ahora
               </button>
