@@ -66,7 +66,8 @@ describe('TurnoForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     usePacientes.mockReturnValue({
-      pacientes: [{ id: 1, nombreCompleto: 'Juan Perez', dni: '12345678', telefono: '11-1234-5678' }],
+      pacientes: [{ id: 1, nombreCompleto: 'Juan Perez', dni: '12345678', telefono: '11-1234-5678', activo: true }],
+      pacientesActivos: [{ id: 1, nombreCompleto: 'Juan Perez', dni: '12345678', telefono: '11-1234-5678', activo: true }],
     });
     useTurnos.mockReturnValue({
       turnos: [],

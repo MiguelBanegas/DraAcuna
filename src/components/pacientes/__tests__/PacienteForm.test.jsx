@@ -46,6 +46,15 @@ describe('PacienteForm', () => {
           obraSocial: 'OSDE',
           numeroAfiliado: '999',
           fechaCreacion: '2026-03-03T10:00:00.000Z',
+          activo: true,
+        },
+      ],
+      pacientesActivos: [
+        {
+          id: 1,
+          nombreCompleto: 'Ana Perez',
+          dni: '12345678',
+          activo: true,
         },
       ],
       agregarPaciente,
@@ -74,6 +83,15 @@ describe('PacienteForm', () => {
           id: 1,
           nombreCompleto: 'Ana Perez',
           dni: '12345678',
+          activo: true,
+        },
+      ],
+      pacientesActivos: [
+        {
+          id: 1,
+          nombreCompleto: 'Ana Perez',
+          dni: '12345678',
+          activo: true,
         },
       ],
       agregarPaciente,
@@ -101,6 +119,7 @@ describe('PacienteForm', () => {
     );
     usePacientes.mockReturnValue({
       pacientes: [],
+      pacientesActivos: [],
       agregarPaciente,
       actualizarPaciente,
     });

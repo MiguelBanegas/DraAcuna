@@ -19,7 +19,7 @@ export const PacientesProvider = ({ children }) => {
   const cargarPacientes = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await pacientesService.getAllPacientes();
+      const data = await pacientesService.getAllPacientes(true);
       setPacientes(data);
     } catch (error) {
       console.error('Error al cargar pacientes:', error);
@@ -56,31 +56,47 @@ export const PacientesProvider = ({ children }) => {
 
   const eliminarPaciente = async (id) => {
     try {
-      await pacientesService.deletePaciente(id);
-      setPacientes(prev => prev.filter(p => p.id != id));
+      const pacienteActualizado = await pacientesService.deletePaciente(id);
+      setPacientes(prev => prev.map(p => p.id == id ? pacienteActualizado : p));
+      return pacienteActualizado;
     } catch (error) {
       console.error('Error al eliminar paciente:', error);
       throw error;
     }
   };
 
+  const reactivarPaciente = async (id) => {
+    try {
+      const pacienteActualizado = await pacientesService.updatePacienteEstado(id, true);
+      setPacientes(prev => prev.map(p => p.id == id ? pacienteActualizado : p));
+      return pacienteActualizado;
+    } catch (error) {
+      console.error('Error al reactivar paciente:', error);
+      throw error;
+    }
+  };
+
+  const pacientesActivos = pacientes.filter((p) => p.activo !== false);
+
   const buscarPacientes = (term) => {
     const tokens = tokenizeSearch(term);
     if (tokens.length === 0) {
-      return pacientes;
+      return pacientesActivos;
     }
-    return pacientes.filter((p) =>
+    return pacientesActivos.filter((p) =>
       matchTokensInFields(tokens, [p.nombreCompleto, p.dni])
     );
   };
 
   const value = {
     pacientes,
+    pacientesActivos,
     loading,
     cargarPacientes,
     agregarPaciente,
     actualizarPaciente,
     eliminarPaciente,
+    reactivarPaciente,
     buscarPacientes
   };
 

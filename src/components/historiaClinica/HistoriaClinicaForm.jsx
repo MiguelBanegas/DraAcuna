@@ -49,12 +49,19 @@ const HistoriaClinicaForm = () => {
     );
   }
 
+  const pacienteArchivado = paciente.activo === false;
+
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     if (submitting) {
       return;
     }
     setSubmitError('');
+
+    if (pacienteArchivado) {
+      Swal.fire('Paciente archivado', 'No se puede generar una nueva historia clínica para un paciente archivado.', 'warning');
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -123,6 +130,11 @@ const HistoriaClinicaForm = () => {
         {/* Encabezado Profesional (Solo impresión/Vista previa) */}
         <Card className="mb-4 shadow-sm border-0">
           <Card.Body>
+            {pacienteArchivado && (
+              <div className="alert alert-warning">
+                Este paciente está archivado. Puede ver su información histórica, pero no generar una nueva historia clínica.
+              </div>
+            )}
             <div className="text-center mb-4">
               <h3 className="mb-1">CONSULTORIO MÉDICO - Dra. Ana Acuña</h3>
               <p className="text-muted small">Resumen de Atención del Paciente</p>
@@ -191,6 +203,7 @@ const HistoriaClinicaForm = () => {
                   variant="primary" 
                   onClick={handleSubmit}
                   disabled={!observaciones.trim() || submitting}
+                  disabled={pacienteArchivado || !observaciones.trim() || submitting}
                   className="d-inline-flex align-items-center gap-2"
                 >
                   <FaSave />

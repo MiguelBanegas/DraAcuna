@@ -24,7 +24,7 @@ const TurnoForm = () => {
   const { id } = useParams();
   const location = useLocation();
   const { turnos, agregarTurno, actualizarTurno } = useTurnos();
-  const { pacientes } = usePacientes();
+  const { pacientes, pacientesActivos } = usePacientes();
   
   const isEditing = !!id;
 
@@ -88,7 +88,8 @@ const TurnoForm = () => {
   }, [id]);
 
   // Preparar opciones para react-select
-  const pacientesOptions = pacientes.map(p => ({
+  const pacientesDisponibles = pacientesActivos.filter((p) => p.activo !== false || p.id === formData.pacienteId);
+  const pacientesOptions = pacientesDisponibles.map(p => ({
     value: p.id,
     label: `${p.nombreCompleto} - DNI: ${p.dni}`,
     paciente: p
@@ -272,6 +273,11 @@ const TurnoForm = () => {
       return;
     }
 
+    if (pacienteSeleccionado?.activo === false) {
+      Swal.fire('Paciente archivado', 'No se pueden registrar nuevos turnos para un paciente archivado.', 'warning');
+      return;
+    }
+
     if (agendaExceptionInfo?.bloqueaTurnos) {
       Swal.fire(
         'Agenda bloqueada',
@@ -373,8 +379,8 @@ const TurnoForm = () => {
                   )}
                   {formData.pacienteId && (
                     <div className="mt-2">
-                      <small className="text-success">
-                        ✓ Paciente seleccionado
+                      <small className={pacienteSeleccionado?.activo === false ? 'text-warning' : 'text-success'}>
+                        {pacienteSeleccionado?.activo === false ? 'Paciente archivado' : '✓ Paciente seleccionado'}
                       </small>
                     </div>
                   )}

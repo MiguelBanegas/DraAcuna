@@ -1,5 +1,16 @@
 import * as db from "../db/index.js";
 
+const ensurePacienteActivo = async (pacienteId) => {
+  const { rows } = await db.query("SELECT activo FROM pacientes WHERE id = $1", [pacienteId]);
+  if (rows.length === 0) {
+    return { ok: false, error: "Paciente no encontrado" };
+  }
+  if (rows[0].activo === false) {
+    return { ok: false, error: "El paciente está archivado y no admite nuevas historias clínicas" };
+  }
+  return { ok: true };
+};
+
 export const getAllHistoriasClinicas = async (req, res) => {
   try {
     const result = await db.query(`
@@ -37,6 +48,11 @@ export const getHistoriaClinicaByPaciente = async (req, res) => {
 export const createHistoriaClinica = async (req, res) => {
   const { paciente_id, observaciones_medico } = req.body;
   try {
+    const pacienteValidation = await ensurePacienteActivo(paciente_id);
+    if (!pacienteValidation.ok) {
+      return res.status(400).json({ error: pacienteValidation.error });
+    }
+
     const query = `
       INSERT INTO historias_clinicas (paciente_id, observaciones_medico)
       VALUES ($1, $2)

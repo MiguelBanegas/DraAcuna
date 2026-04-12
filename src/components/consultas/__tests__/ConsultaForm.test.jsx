@@ -59,7 +59,8 @@ describe('ConsultaForm', () => {
     mockParams.id = undefined;
     mockLocation.state = null;
     usePacientes.mockReturnValue({
-      pacientes: [{ id: 1, nombreCompleto: 'Juan Perez', dni: '12345678', obraSocial: 'OSDE' }],
+      pacientes: [{ id: 1, nombreCompleto: 'Juan Perez', dni: '12345678', obraSocial: 'OSDE', activo: true }],
+      pacientesActivos: [{ id: 1, nombreCompleto: 'Juan Perez', dni: '12345678', obraSocial: 'OSDE', activo: true }],
     });
     useConsultas.mockReturnValue({
       consultas: [],

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Table, Button, Form, InputGroup, Badge, Container, Row, Col, Card } from 'react-bootstrap';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaEye, FaUndo } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { usePacientes } from '../../context/PacientesContext';
 import Swal from 'sweetalert2';
@@ -8,9 +8,8 @@ import { calcularEdadDesdeFecha } from '../../utils/date';
 
 const PacientesList = () => {
   const navigate = useNavigate();
-  const { pacientes, eliminarPaciente, buscarPacientes } = usePacientes();
+  const { pacientes, eliminarPaciente, reactivarPaciente } = usePacientes();
   const [searchTerm, setSearchTerm] = useState('');
-  const [pacientesFiltrados, setPacientesFiltrados] = useState([]);
   const [pendingActionId, setPendingActionId] = useState(null);
   const searchInputRef = useRef(null);
 
@@ -23,15 +22,7 @@ const PacientesList = () => {
 
   // Actualizar filtro cuando cambia el término de búsqueda
   const handleSearch = (e) => {
-    const term = e.target.value;
-    setSearchTerm(term);
-    
-    if (term.trim().length < 3) {
-      setPacientesFiltrados([]);
-    } else {
-      const resultados = buscarPacientes(term);
-      setPacientesFiltrados(resultados);
-    }
+    setSearchTerm(e.target.value);
   };
 
   // Manejar eliminación con confirmación
@@ -40,14 +31,14 @@ const PacientesList = () => {
       return;
     }
 
-    const result = await Swal.fire({
-      title: '¿Está seguro?',
-      text: `Está por eliminar al paciente ${nombre}. Esta acción no se puede deshacer.`,
+      const result = await Swal.fire({
+      title: '¿Archivar paciente?',
+      text: `Se archivará al paciente ${nombre}. Su historial se conserva, pero no podrá usarse para nuevos registros.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
+      confirmButtonText: 'Sí, archivar',
       cancelButtonText: 'Cancelar',
       reverseButtons: true,
       showLoaderOnConfirm: true,
@@ -58,7 +49,7 @@ const PacientesList = () => {
           await eliminarPaciente(id);
         } catch (error) {
           setPendingActionId(null);
-          Swal.showValidationMessage('No se pudo eliminar el paciente');
+          Swal.showValidationMessage('No se pudo archivar el paciente');
           throw error;
         }
       }
@@ -66,24 +57,38 @@ const PacientesList = () => {
 
     if (result.isConfirmed) {
       try {
-        // Actualizar la lista filtrada tras eliminar
-        if (searchTerm.trim().length >= 3) {
-          const resultados = buscarPacientes(searchTerm);
-          setPacientesFiltrados(resultados);
-        }
         await Swal.fire({
-          title: 'Eliminado',
-          text: 'El paciente ha sido eliminado correctamente.',
+          title: 'Archivado',
+          text: 'El paciente ha sido archivado correctamente.',
           icon: 'success',
           timer: 2000,
           showConfirmButton: false
         });
       } catch (error) {
         console.error('Error al eliminar paciente:', error);
-        Swal.fire('Error', 'No se pudo eliminar al paciente', 'error');
+          Swal.fire('Error', 'No se pudo archivar al paciente', 'error');
       } finally {
         setPendingActionId(null);
       }
+    }
+  };
+
+  const handleReactivate = async (id, nombre) => {
+    try {
+      setPendingActionId(id);
+      await reactivarPaciente(id);
+      await Swal.fire({
+        title: 'Reactivado',
+        text: `El paciente ${nombre} volvió a estar activo.`,
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error('Error al reactivar paciente:', error);
+      Swal.fire('Error', 'No se pudo reactivar al paciente', 'error');
+    } finally {
+      setPendingActionId(null);
     }
   };
 
@@ -92,8 +97,14 @@ const PacientesList = () => {
     return calcularEdadDesdeFecha(fechaNacimiento);
   };
 
-  // El sistema ahora no carga todos al inicio, solo muestra los filtrados
-  const listaMostrar = pacientesFiltrados;
+  const listaMostrar = searchTerm.trim().length >= 3
+    ? pacientes.filter((p) => {
+        const term = searchTerm.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        const nombre = String(p.nombreCompleto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        const dni = String(p.dni || '').toLowerCase();
+        return nombre.includes(term) || dni.includes(term);
+      })
+    : pacientes;
 
   return (
     <Container>
@@ -178,6 +189,9 @@ const PacientesList = () => {
                     <tr key={paciente.id}>
                       <td>
                         <strong>{paciente.nombreCompleto}</strong>
+                        {paciente.activo === false && (
+                          <Badge bg="secondary" className="ms-2">Archivado</Badge>
+                        )}
                         <br />
                         <small className="text-muted">{paciente.email}</small>
                       </td>
@@ -213,19 +227,35 @@ const PacientesList = () => {
                           >
                             <FaEdit />
                           </Button>
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
-                            onClick={() => handleDelete(paciente.id, paciente.nombreCompleto)}
-                            title="Eliminar"
-                            disabled={pendingActionId !== null}
-                          >
-                            {pendingActionId === paciente.id ? (
-                              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            ) : (
-                              <FaTrash />
-                            )}
-                          </Button>
+                          {paciente.activo === false ? (
+                            <Button
+                              variant="outline-success"
+                              size="sm"
+                              onClick={() => handleReactivate(paciente.id, paciente.nombreCompleto)}
+                              title="Reactivar"
+                              disabled={pendingActionId !== null}
+                            >
+                              {pendingActionId === paciente.id ? (
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                              ) : (
+                                <FaUndo />
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              onClick={() => handleDelete(paciente.id, paciente.nombreCompleto)}
+                              title="Archivar"
+                              disabled={pendingActionId !== null}
+                            >
+                              {pendingActionId === paciente.id ? (
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                              ) : (
+                                <FaTrash />
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>

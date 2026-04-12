@@ -20,6 +20,7 @@ const mapPacienteFromAPI = (p) => ({
   obraSocial: p.obra_social,
   numeroAfiliado: p.numero_afiliado,
   fechaCreacion: p.fecha_creacion,
+  activo: p.activo !== false,
 });
 
 const mapPacienteToAPI = (p) => ({
@@ -34,9 +35,9 @@ const mapPacienteToAPI = (p) => ({
   numero_afiliado: p.numeroAfiliado,
 });
 
-export const getAllPacientes = async () => {
+export const getAllPacientes = async (includeInactivos = false) => {
   try {
-    const response = await fetch(`${API_URL}/pacientes`, {
+    const response = await fetch(`${API_URL}/pacientes?includeInactivos=${includeInactivos}`, {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error("Error al cargar pacientes");
@@ -94,23 +95,27 @@ export const updatePaciente = async (id, paciente) => {
   }
 };
 
-export const deletePaciente = async (id) => {
+export const updatePacienteEstado = async (id, activo) => {
   try {
-    const response = await fetch(`${API_URL}/pacientes/${id}`, {
-      method: "DELETE",
+    const response = await fetch(`${API_URL}/pacientes/${id}/estado`, {
+      method: "PATCH",
       headers: getHeaders(),
+      body: JSON.stringify({ activo }),
     });
-    if (!response.ok) throw new Error("Error al eliminar paciente");
-    return true;
+    if (!response.ok) throw new Error("Error al actualizar el estado del paciente");
+    const data = await response.json();
+    return mapPacienteFromAPI(data);
   } catch (error) {
-    console.error("Error al eliminar paciente:", error);
+    console.error("Error al actualizar estado de paciente:", error);
     throw error;
   }
 };
 
-export const searchPacientes = async (q, limit = 30) => {
+export const deletePaciente = async (id) => updatePacienteEstado(id, false);
+
+export const searchPacientes = async (q, limit = 30, includeInactivos = false) => {
   try {
-    const response = await fetch(`${API_URL}/pacientes?q=${encodeURIComponent(q)}&limit=${limit}`, {
+    const response = await fetch(`${API_URL}/pacientes?q=${encodeURIComponent(q)}&limit=${limit}&includeInactivos=${includeInactivos}`, {
       headers: getHeaders(),
     });
     if (!response.ok) throw new Error('Error al buscar pacientes');

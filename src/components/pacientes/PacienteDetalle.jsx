@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Badge, ListGroup } from 'react-bootstrap';
 import { FaEdit, FaArrowLeft, FaCalendarAlt, FaStethoscope, FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaIdCard, FaFileMedical } from 'react-icons/fa';
@@ -79,6 +79,8 @@ const PacienteDetalle = () => {
     completado: 'secondary'
   };
 
+  const pacienteArchivado = paciente.activo === false;
+
   return (
     <Container>
       <Row className="mb-4">
@@ -92,7 +94,10 @@ const PacienteDetalle = () => {
             Volver a Pacientes
           </Button>
           <div className="d-flex justify-content-between align-items-center">
-            <h2>{paciente.nombreCompleto}</h2>
+            <div className="d-flex align-items-center gap-2">
+              <h2 className="mb-0">{paciente.nombreCompleto}</h2>
+              {pacienteArchivado && <Badge bg="secondary">Archivado</Badge>}
+            </div>
             <Button 
               variant="primary" 
               onClick={() => navigate(`/pacientes/${id}/editar`)}
@@ -206,6 +211,11 @@ const PacienteDetalle = () => {
 
         {/* Historial de Consultas y Turnos */}
         <Col md={8}>
+          {pacienteArchivado && (
+            <div className="alert alert-warning">
+              Este paciente está archivado. Su historial sigue disponible, pero no se pueden crear nuevos turnos ni consultas hasta reactivarlo.
+            </div>
+          )}
           {/* Turnos Próximos */}
           <Card className="mb-4">
             <Card.Header className="d-flex justify-content-between align-items-center">
@@ -217,6 +227,7 @@ const PacienteDetalle = () => {
                 size="sm" 
                 variant="primary"
                 onClick={() => navigate('/turnos/nuevo', { state: { pacienteId: id } })}
+                disabled={pacienteArchivado}
               >
                 Nuevo Turno
               </Button>
@@ -267,6 +278,7 @@ const PacienteDetalle = () => {
                 size="sm" 
                 variant="primary"
                 onClick={() => navigate('/consultas/nueva', { state: { pacienteId: id } })}
+                disabled={pacienteArchivado}
               >
                 Nueva Consulta
               </Button>

@@ -13,7 +13,7 @@ const ConsultaForm = () => {
   const { id } = useParams();
   const location = useLocation();
   const { consultas, agregarConsulta, actualizarConsulta } = useConsultas();
-  const { pacientes } = usePacientes();
+  const { pacientes, pacientesActivos } = usePacientes();
   
   const [formData, setFormData] = useState({
     pacienteId: location.state?.pacienteId || '',
@@ -48,7 +48,8 @@ const ConsultaForm = () => {
   const loadTimer = useRef(null);
 
   // Preparar opciones para react-select
-  const pacientesOptions = pacientes.map(p => ({
+  const pacientesDisponibles = pacientesActivos.filter((p) => p.activo !== false || p.id === formData.pacienteId);
+  const pacientesOptions = pacientesDisponibles.map(p => ({
     value: p.id,
     label: `${p.nombreCompleto} - DNI: ${p.dni}`,
     paciente: p
@@ -234,6 +235,11 @@ const ConsultaForm = () => {
       return;
     }
 
+    if (pacienteSeleccionado?.activo === false) {
+      Swal.fire('Paciente archivado', 'No se pueden registrar nuevas consultas para un paciente archivado.', 'warning');
+      return;
+    }
+
     try {
       setSubmitting(true);
       const consultaData = {
@@ -353,6 +359,9 @@ const ConsultaForm = () => {
                 <strong>Paciente seleccionado:</strong> {pacienteSeleccionado.nombreCompleto}
                 {pacienteSeleccionado.obraSocial && (
                   <> - Obra Social: {pacienteSeleccionado.obraSocial}</>
+                )}
+                {pacienteSeleccionado.activo === false && (
+                  <> - Paciente archivado</>
                 )}
               </div>
             )}

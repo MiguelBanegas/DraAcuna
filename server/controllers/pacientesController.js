@@ -1,5 +1,18 @@
 import * as db from "../db/index.js";
 
+let ensurePacientesActivoColumnPromise;
+
+const ensurePacientesActivoColumn = async () => {
+  if (!ensurePacientesActivoColumnPromise) {
+    ensurePacientesActivoColumnPromise = db.query(`
+      ALTER TABLE pacientes
+      ADD COLUMN IF NOT EXISTS activo BOOLEAN NOT NULL DEFAULT TRUE
+    `);
+  }
+
+  await ensurePacientesActivoColumnPromise;
+};
+
 const normalizeQuery = (text) =>
   String(text || "")
     .normalize("NFD")
@@ -10,7 +23,10 @@ const normalizeQuery = (text) =>
 // Obtener todos los pacientes
 export const getAllPacientes = async (req, res) => {
   try {
-    const { q, limit } = req.query;
+    await ensurePacientesActivoColumn();
+    const { q, limit, includeInactivos } = req.query;
+    const shouldIncludeInactivos = includeInactivos === "true";
+    const activoCondition = shouldIncludeInactivos ? "" : "activo = TRUE";
     // Si se proporciona un query `q`, buscar por nombre o DNI (ILIKE para case-insensitive)
     if (q) {
       const max = Math.min(parseInt(limit, 10) || 50, 200);
@@ -18,12 +34,13 @@ export const getAllPacientes = async (req, res) => {
       if (tokens.length > 0) {
         const nombreExpr =
           "translate(lower(coalesce(nombre_completo, '')), 'áéíóúüñ', 'aeiouun')";
-        const conditions = tokens
+        const searchConditions = tokens
           .map(
             (_, idx) =>
               `(${nombreExpr} LIKE $${idx + 1} OR lower(dni::text) LIKE $${idx + 1})`
           )
           .join(" AND ");
+        const conditions = [activoCondition, searchConditions].filter(Boolean).join(" AND ");
         const values = tokens.map((token) => `%${token}%`);
         values.push(max);
 
@@ -39,7 +56,7 @@ export const getAllPacientes = async (req, res) => {
 
     // Si no hay query, devolver todos (cuidado con volumen en producción)
     const { rows } = await db.query(
-      "SELECT * FROM pacientes ORDER BY nombre_completo ASC"
+      `SELECT * FROM pacientes ${activoCondition ? `WHERE ${activoCondition}` : ""} ORDER BY nombre_completo ASC`
     );
     res.json(rows);
   } catch (error) {
@@ -52,6 +69,7 @@ export const getAllPacientes = async (req, res) => {
 export const getPacienteById = async (req, res) => {
   const { id } = req.params;
   try {
+    await ensurePacientesActivoColumn();
     const { rows } = await db.query("SELECT * FROM pacientes WHERE id = $1", [
       id,
     ]);
@@ -80,11 +98,12 @@ export const createPaciente = async (req, res) => {
   } = req.body;
 
   try {
+    await ensurePacientesActivoColumn();
     const query = `
       INSERT INTO pacientes (
-        nombre_completo, dni, fecha_nacimiento, genero, 
-        telefono, email, direccion, obra_social, numero_afiliado
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+        nombre_completo, dni, fecha_nacimiento, genero,
+        telefono, email, direccion, obra_social, numero_afiliado, activo
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, TRUE)
       RETURNING *
     `;
     const values = [
@@ -129,6 +148,7 @@ export const updatePaciente = async (req, res) => {
   } = req.body;
 
   try {
+    await ensurePacientesActivoColumn();
     const query = `
       UPDATE pacientes SET 
         nombre_completo = $1, dni = $2, fecha_nacimiento = $3, genero = $4, 
@@ -160,19 +180,28 @@ export const updatePaciente = async (req, res) => {
   }
 };
 
-// Eliminar un paciente
-export const deletePaciente = async (req, res) => {
+export const updatePacienteEstado = async (req, res) => {
   const { id } = req.params;
+  const { activo } = req.body;
+
   try {
-    const { rowCount } = await db.query("DELETE FROM pacientes WHERE id = $1", [
-      id,
-    ]);
-    if (rowCount === 0) {
+    await ensurePacientesActivoColumn();
+    const { rows } = await db.query(
+      "UPDATE pacientes SET activo = $1 WHERE id = $2 RETURNING *",
+      [Boolean(activo), id]
+    );
+    if (rows.length === 0) {
       return res.status(404).json({ error: "Paciente no encontrado" });
     }
-    res.json({ message: "Paciente eliminado correctamente" });
+    res.json(rows[0]);
   } catch (error) {
-    console.error("Error en deletePaciente:", error);
-    res.status(500).json({ error: "Error al eliminar el paciente" });
+    console.error("Error en updatePacienteEstado:", error);
+    res.status(500).json({ error: "Error al actualizar el estado del paciente" });
   }
+};
+
+// Archivar un paciente
+export const deletePaciente = async (req, res) => {
+  req.body = { activo: false };
+  return updatePacienteEstado(req, res);
 };

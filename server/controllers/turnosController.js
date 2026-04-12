@@ -1,6 +1,17 @@
 import * as db from "../db/index.js";
 import { getBlockingAgendaExceptionByDate } from "./agendaExcepcionesController.js";
 
+const ensurePacienteActivo = async (pacienteId) => {
+  const { rows } = await db.query("SELECT activo FROM pacientes WHERE id = $1", [pacienteId]);
+  if (rows.length === 0) {
+    return { ok: false, error: "Paciente no encontrado" };
+  }
+  if (rows[0].activo === false) {
+    return { ok: false, error: "El paciente está archivado y no admite nuevos cambios de agenda" };
+  }
+  return { ok: true };
+};
+
 const getDateKeyFromIsoString = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -45,6 +56,11 @@ export const getAllTurnos = async (req, res) => {
 export const createTurno = async (req, res) => {
   const { paciente_id, fecha_hora, duracion, motivo, observaciones, estado } = req.body;
   try {
+    const pacienteValidation = await ensurePacienteActivo(paciente_id);
+    if (!pacienteValidation.ok) {
+      return res.status(400).json({ error: pacienteValidation.error });
+    }
+
     const agendaException = await validateAgendaException(fecha_hora);
     if (agendaException) {
       return res.status(400).json({
@@ -131,6 +147,11 @@ export const updateTurno = async (req, res) => {
   const { paciente_id, fecha_hora, duracion, estado, motivo, observaciones } = req.body;
   
   try {
+    const pacienteValidation = await ensurePacienteActivo(paciente_id);
+    if (!pacienteValidation.ok) {
+      return res.status(400).json({ error: pacienteValidation.error });
+    }
+
     const agendaException = await validateAgendaException(fecha_hora);
     if (agendaException) {
       return res.status(400).json({

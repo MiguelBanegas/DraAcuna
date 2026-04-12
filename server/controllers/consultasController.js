@@ -1,5 +1,16 @@
 import * as db from "../db/index.js";
 
+const ensurePacienteActivo = async (pacienteId) => {
+  const { rows } = await db.query("SELECT activo FROM pacientes WHERE id = $1", [pacienteId]);
+  if (rows.length === 0) {
+    return { ok: false, error: "Paciente no encontrado" };
+  }
+  if (rows[0].activo === false) {
+    return { ok: false, error: "El paciente está archivado y no admite nuevas consultas" };
+  }
+  return { ok: true };
+};
+
 export const getAllConsultas = async (req, res) => {
   try {
     const result = await db.query(`
@@ -64,6 +75,11 @@ export const createConsulta = async (req, res) => {
     proxima_consulta,
   } = req.body;
   try {
+    const pacienteValidation = await ensurePacienteActivo(paciente_id);
+    if (!pacienteValidation.ok) {
+      return res.status(400).json({ error: pacienteValidation.error });
+    }
+
     const query = `
       INSERT INTO consultas (
         paciente_id, fecha_hora, motivo, examen_fisico, diagnostico, 
@@ -94,6 +110,7 @@ export const createConsulta = async (req, res) => {
 export const updateConsulta = async (req, res) => {
   const { id } = req.params;
   const {
+    paciente_id,
     motivo,
     examen_fisico,
     diagnostico,
@@ -105,6 +122,13 @@ export const updateConsulta = async (req, res) => {
   } = req.body;
 
   try {
+    if (paciente_id) {
+      const pacienteValidation = await ensurePacienteActivo(paciente_id);
+      if (!pacienteValidation.ok) {
+        return res.status(400).json({ error: pacienteValidation.error });
+      }
+    }
+
     const query = `
       UPDATE consultas SET 
         motivo = $1, examen_fisico = $2, diagnostico = $3, tratamiento = $4, observaciones = $5, 
