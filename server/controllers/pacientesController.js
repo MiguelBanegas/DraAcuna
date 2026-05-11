@@ -20,6 +20,11 @@ const normalizeQuery = (text) =>
     .toLowerCase()
     .trim();
 
+const isValidDni = (value) => {
+  const dni = String(value || "").trim();
+  return /^\d{7,8}$/.test(dni) && !/^0+$/.test(dni);
+};
+
 // Obtener todos los pacientes
 export const getAllPacientes = async (req, res) => {
   try {
@@ -99,6 +104,11 @@ export const createPaciente = async (req, res) => {
 
   try {
     await ensurePacientesActivoColumn();
+    if (!isValidDni(dni)) {
+      return res.status(400).json({
+        error: "El DNI ingresado no es válido. Debe tener 7 u 8 dígitos y no puede ser todo ceros.",
+      });
+    }
     const query = `
       INSERT INTO pacientes (
         nombre_completo, dni, fecha_nacimiento, genero,
@@ -149,6 +159,11 @@ export const updatePaciente = async (req, res) => {
 
   try {
     await ensurePacientesActivoColumn();
+    if (!isValidDni(dni)) {
+      return res.status(400).json({
+        error: "El DNI ingresado no es válido. Debe tener 7 u 8 dígitos y no puede ser todo ceros.",
+      });
+    }
     const query = `
       UPDATE pacientes SET 
         nombre_completo = $1, dni = $2, fecha_nacimiento = $3, genero = $4, 

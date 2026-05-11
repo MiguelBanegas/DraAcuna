@@ -19,6 +19,11 @@ const formatearFechaLocal = (fechaUTC) => {
   return fechaLocal.toISOString().slice(0, 16);
 };
 
+const isValidDni = (value) => {
+  const dni = String(value || '').trim();
+  return /^\d{7,8}$/.test(dni) && !/^0+$/.test(dni);
+};
+
 const TurnoForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -399,7 +404,7 @@ const TurnoForm = () => {
     const nextErrors = {};
     if (!nuevoPacienteData.apellido.trim()) nextErrors.apellido = 'El apellido es requerido';
     if (!nuevoPacienteData.nombre.trim()) nextErrors.nombre = 'El nombre es requerido';
-    if (!/^\d{7,8}$/.test(nuevoPacienteData.dni.trim())) nextErrors.dni = 'El DNI debe tener 7 u 8 dígitos';
+    if (!isValidDni(nuevoPacienteData.dni.trim())) nextErrors.dni = 'DNI inválido: debe tener 7 u 8 dígitos y no puede ser todo ceros';
     if (!nuevoPacienteData.fechaNacimiento) nextErrors.fechaNacimiento = 'La fecha de nacimiento es requerida';
     if (!nuevoPacienteData.genero) nextErrors.genero = 'El género es requerido';
     if (!nuevoPacienteData.telefono.trim()) nextErrors.telefono = 'El teléfono es requerido';
@@ -431,7 +436,7 @@ const TurnoForm = () => {
       resetNuevoPacienteModal();
       Swal.fire({ title: 'Paciente creado', text: 'Se seleccionó automáticamente para este turno.', icon: 'success', timer: 1500, showConfirmButton: false });
     } catch (error) {
-      Swal.fire('Error', 'No se pudo guardar el paciente', 'error');
+      Swal.fire('Error', error?.message || 'No se pudo guardar el paciente', 'error');
     } finally {
       setGuardandoPaciente(false);
     }

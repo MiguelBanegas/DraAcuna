@@ -33,6 +33,11 @@ const capitalizeEachWord = (text) => {
     .join(' ');    // Une de nuevo con espacios
 };
 
+const isValidDni = (value) => {
+  const dni = String(value || '').trim();
+  return /^\d{7,8}$/.test(dni) && !/^0+$/.test(dni);
+};
+
 
 const PacienteForm = () => {
   const navigate = useNavigate();
@@ -61,7 +66,7 @@ const PacienteForm = () => {
 
   const buscarPacientePorDni = (dniValue) => {
     const normalizedDni = String(dniValue || '').trim();
-    if (!/^\d{7,8}$/.test(normalizedDni)) {
+    if (!isValidDni(normalizedDni)) {
       return null;
     }
 
@@ -178,8 +183,8 @@ const PacienteForm = () => {
 
     if (!formData.dni.trim()) {
       newErrors.dni = 'El DNI es requerido';
-    } else if (!/^\d{7,8}$/.test(formData.dni.trim())) {
-      newErrors.dni = 'El DNI debe tener 7 u 8 dígitos';
+    } else if (!isValidDni(formData.dni.trim())) {
+      newErrors.dni = 'DNI inválido: debe tener 7 u 8 dígitos y no puede ser todo ceros';
     } else {
       const pacienteExistente = buscarPacientePorDni(formData.dni);
       if (pacienteExistente) {
