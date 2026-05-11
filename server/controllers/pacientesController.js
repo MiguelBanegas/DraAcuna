@@ -186,9 +186,29 @@ export const updatePacienteEstado = async (req, res) => {
 
   try {
     await ensurePacientesActivoColumn();
+    const targetActivo = Boolean(activo);
+
+    if (!targetActivo) {
+      const { rows: conflictos } = await db.query(
+        `SELECT COUNT(*)::int AS total
+         FROM turnos
+         WHERE paciente_id = $1
+           AND fecha_hora >= NOW()
+           AND estado IN ('pendiente', 'confirmado')`,
+        [id]
+      );
+
+      const totalConflictos = conflictos[0]?.total || 0;
+      if (totalConflictos > 0) {
+        return res.status(409).json({
+          error: `No se puede archivar el paciente porque tiene ${totalConflictos} turno(s) futuro(s) pendiente(s)/confirmado(s).`,
+        });
+      }
+    }
+
     const { rows } = await db.query(
       "UPDATE pacientes SET activo = $1 WHERE id = $2 RETURNING *",
-      [Boolean(activo), id]
+      [targetActivo, id]
     );
     if (rows.length === 0) {
       return res.status(404).json({ error: "Paciente no encontrado" });

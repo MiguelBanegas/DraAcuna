@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Button, Card, Col, Container, Form, Row, Table } from 'react-bootstrap';
+import { Alert, Badge, Button, Card, Col, Container, Form, Row, Table } from 'react-bootstrap';
 import Swal from 'sweetalert2';
 import { useAuth } from '../context/AuthContext';
 
@@ -18,7 +18,7 @@ const initialResetForm = {
 };
 
 const Usuarios = () => {
-  const { getUsers, createUser, adminResetUserCredentials, isAdmin } = useAuth();
+  const { getUsers, createUser, adminResetUserCredentials, updateUserEstado, isAdmin, user } = useAuth();
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [createForm, setCreateForm] = useState(initialCreateForm);
@@ -29,6 +29,7 @@ const Usuarios = () => {
   const [resetError, setResetError] = useState('');
   const [submittingCreate, setSubmittingCreate] = useState(false);
   const [submittingReset, setSubmittingReset] = useState(false);
+  const [pendingUserActionId, setPendingUserActionId] = useState(null);
 
   const loadUsers = async () => {
     setLoadingUsers(true);
@@ -169,6 +170,46 @@ const Usuarios = () => {
     await loadUsers();
   };
 
+  const handleToggleUserEstado = async (targetUser) => {
+    if (pendingUserActionId !== null) return;
+    const willActivate = targetUser.activo === false;
+    const title = willActivate ? '¿Reactivar usuario?' : '¿Archivar usuario?';
+    const text = willActivate
+      ? `Se reactivará a ${targetUser.nombre || targetUser.username}.`
+      : `Se archivará a ${targetUser.nombre || targetUser.username}.`;
+
+    const result = await Swal.fire({
+      title,
+      text,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: willActivate ? 'Sí, reactivar' : 'Sí, archivar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+      showLoaderOnConfirm: true,
+      preConfirm: async () => {
+        setPendingUserActionId(targetUser.id);
+        const resp = await updateUserEstado(targetUser.id, willActivate);
+        if (!resp.success) {
+          setPendingUserActionId(null);
+          Swal.showValidationMessage(resp.error || 'No se pudo actualizar el estado del usuario');
+          throw new Error(resp.error || 'No se pudo actualizar el estado del usuario');
+        }
+      },
+    });
+
+    if (result.isConfirmed) {
+      await loadUsers();
+      await Swal.fire({
+        title: willActivate ? 'Usuario reactivado' : 'Usuario archivado',
+        icon: 'success',
+        timer: 1600,
+        showConfirmButton: false,
+      });
+    }
+    setPendingUserActionId(null);
+  };
+
   if (!isAdmin()) {
     return (
       <Container>
@@ -277,6 +318,8 @@ const Usuarios = () => {
                       <th>Usuario</th>
                       <th>Email</th>
                       <th>Rol</th>
+                      <th>Estado</th>
+                      <th className="text-center">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -286,6 +329,19 @@ const Usuarios = () => {
                         <td>{item.username}</td>
                         <td>{item.email || '-'}</td>
                         <td>{item.rol}</td>
+                        <td>
+                          {item.activo === false ? <Badge bg="secondary">Archivado</Badge> : <Badge bg="success">Activo</Badge>}
+                        </td>
+                        <td className="text-center">
+                          <Button
+                            variant={item.activo === false ? 'outline-success' : 'outline-danger'}
+                            size="sm"
+                            onClick={() => handleToggleUserEstado(item)}
+                            disabled={pendingUserActionId !== null || String(item.id) === String(user?.id)}
+                          >
+                            {item.activo === false ? 'Reactivar' : 'Archivar'}
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

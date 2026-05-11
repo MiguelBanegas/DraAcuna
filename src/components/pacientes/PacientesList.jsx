@@ -53,7 +53,7 @@ const PacientesList = () => {
           await eliminarPaciente(id);
         } catch (error) {
           setPendingActionId(null);
-          Swal.showValidationMessage('No se pudo archivar el paciente');
+          Swal.showValidationMessage(error?.message || 'No se pudo archivar el paciente');
           throw error;
         }
       }

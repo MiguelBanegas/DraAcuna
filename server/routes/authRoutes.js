@@ -8,6 +8,7 @@ router.post("/login", authController.login);
 router.post("/register", requireAdmin, authController.register);
 router.put("/credentials", requireAuth, authController.updateCredentials);
 router.get("/users", requireAdmin, authController.listUsers);
+router.patch("/users/:id/estado", requireAdmin, authController.updateUserEstado);
 router.put(
   "/users/:id/reset-credentials",
   requireAdmin,

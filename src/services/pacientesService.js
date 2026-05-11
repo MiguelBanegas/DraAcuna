@@ -102,7 +102,18 @@ export const updatePacienteEstado = async (id, activo) => {
       headers: getHeaders(),
       body: JSON.stringify({ activo }),
     });
-    if (!response.ok) throw new Error("Error al actualizar el estado del paciente");
+    if (!response.ok) {
+      let detail = "Error al actualizar el estado del paciente";
+      try {
+        const errorData = await response.json();
+        if (errorData?.error) {
+          detail = errorData.error;
+        }
+      } catch {
+        // ignore parse error and keep fallback message
+      }
+      throw new Error(detail);
+    }
     const data = await response.json();
     return mapPacienteFromAPI(data);
   } catch (error) {

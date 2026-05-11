@@ -197,6 +197,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUserEstado = async (userId, activo) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/users/${userId}/estado`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ activo }),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true, user: data };
+      }
+
+      return { success: false, error: data.error || 'No se pudo actualizar el estado del usuario' };
+    } catch (error) {
+      console.error('Error al actualizar estado de usuario:', error);
+      return { success: false, error: 'No se pudo conectar con el servidor' };
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -220,6 +240,7 @@ export const AuthProvider = ({ children }) => {
     getUsers,
     createUser,
     adminResetUserCredentials,
+    updateUserEstado,
     logout,
     isAuthenticated,
     isAdmin,

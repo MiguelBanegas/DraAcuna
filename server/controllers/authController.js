@@ -2,6 +2,18 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import * as db from "../db/index.js";
 
+let ensureUsuariosActivoColumnPromise;
+
+const ensureUsuariosActivoColumn = async () => {
+  if (!ensureUsuariosActivoColumnPromise) {
+    ensureUsuariosActivoColumnPromise = db.query(`
+      ALTER TABLE usuarios
+      ADD COLUMN IF NOT EXISTS activo BOOLEAN NOT NULL DEFAULT TRUE
+    `);
+  }
+  await ensureUsuariosActivoColumnPromise;
+};
+
 const signAuthToken = (user) =>
   jwt.sign(
     { id: user.id, username: user.username, rol: user.rol },
@@ -14,9 +26,10 @@ export const login = async (req, res) => {
   const { username, password } = req.body;
 
   try {
+    await ensureUsuariosActivoColumn();
     // Buscar usuario
     const { rows } = await db.query(
-      "SELECT * FROM usuarios WHERE username = $1",
+      "SELECT * FROM usuarios WHERE username = $1 AND activo = TRUE",
       [username]
     );
 
@@ -67,14 +80,15 @@ export const register = async (req, res) => {
   }
 
   try {
+    await ensureUsuariosActivoColumn();
     // Hash de la contraseña
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
     const query = `
-      INSERT INTO usuarios (username, password_hash, nombre, email, rol)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id, username, nombre, rol
+      INSERT INTO usuarios (username, password_hash, nombre, email, rol, activo)
+      VALUES ($1, $2, $3, $4, $5, TRUE)
+      RETURNING id, username, nombre, email, rol, activo
     `;
     const values = [username, passwordHash, nombre, email, rol || "admin"];
 
@@ -96,8 +110,9 @@ export const register = async (req, res) => {
 
 export const listUsers = async (_req, res) => {
   try {
+    await ensureUsuariosActivoColumn();
     const { rows } = await db.query(
-      `SELECT id, username, nombre, email, rol
+      `SELECT id, username, nombre, email, rol, activo
        FROM usuarios
        ORDER BY nombre ASC, username ASC`
     );
@@ -127,9 +142,13 @@ export const adminResetCredentials = async (req, res) => {
   }
 
   try {
+    await ensureUsuariosActivoColumn();
     const { rows } = await db.query("SELECT * FROM usuarios WHERE id = $1", [id]);
     if (rows.length === 0) {
       return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    if (rows[0].activo === false) {
+      return res.status(400).json({ error: "No se pueden restablecer credenciales de un usuario archivado" });
     }
 
     const duplicate = await db.query(
@@ -186,12 +205,16 @@ export const updateCredentials = async (req, res) => {
   }
 
   try {
+    await ensureUsuariosActivoColumn();
     const { rows } = await db.query("SELECT * FROM usuarios WHERE id = $1", [
       userId,
     ]);
 
     if (rows.length === 0) {
       return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    if (rows[0].activo === false) {
+      return res.status(403).json({ error: "Usuario inactivo" });
     }
 
     const usuario = rows[0];
@@ -247,5 +270,44 @@ export const updateCredentials = async (req, res) => {
     res
       .status(500)
       .json({ error: "Error al actualizar las credenciales" });
+  }
+};
+
+export const updateUserEstado = async (req, res) => {
+  const { id } = req.params;
+  const { activo } = req.body;
+  const actorId = req.user?.id;
+  const nextActivo = Boolean(activo);
+
+  try {
+    await ensureUsuariosActivoColumn();
+    const { rows } = await db.query("SELECT id, rol, activo FROM usuarios WHERE id = $1", [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    const target = rows[0];
+
+    if (!nextActivo && String(actorId) === String(id)) {
+      return res.status(400).json({ error: "No puede archivar su propio usuario" });
+    }
+
+    if (!nextActivo && String(target.rol || "").toLowerCase() === "admin") {
+      const { rows: admins } = await db.query(
+        "SELECT COUNT(*)::int AS total FROM usuarios WHERE rol = 'admin' AND activo = TRUE"
+      );
+      const totalAdminsActivos = admins[0]?.total || 0;
+      if (totalAdminsActivos <= 1) {
+        return res.status(409).json({ error: "No se puede archivar el último administrador activo" });
+      }
+    }
+
+    const { rows: updatedRows } = await db.query(
+      "UPDATE usuarios SET activo = $1 WHERE id = $2 RETURNING id, username, nombre, email, rol, activo",
+      [nextActivo, id]
+    );
+    return res.json(updatedRows[0]);
+  } catch (error) {
+    console.error("Error en updateUserEstado:", error);
+    return res.status(500).json({ error: "Error al actualizar el estado del usuario" });
   }
 };
