@@ -5,7 +5,6 @@ import { usePacientes } from '../context/PacientesContext';
 import { useTurnos } from '../context/TurnosContext';
 import { useAuth } from '../context/AuthContext';
 import PublicHome from '../components/home/PublicHome';
-import DoctorChatModal from '../components/layout/DoctorChatModal';
 import AppVersionBadge from '../components/layout/AppVersionBadge';
 
 const Home = () => {
@@ -213,7 +212,6 @@ const Home = () => {
           </Card>
         </Col>
       </Row>
-      <DoctorChatModal />
     </Container>
   );
 };
