@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Form, Button, Container, Row, Col, Card } from 'react-bootstrap';
+import { Form, Button, Container, Row, Col, Card, Modal } from 'react-bootstrap';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { FaSave, FaTimes } from 'react-icons/fa';
+import { FaSave, FaTimes, FaUserPlus } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import AsyncSelect from 'react-select/async';
 import { searchPacientes, getPacienteById } from '../../services/pacientesService';
@@ -24,7 +24,7 @@ const TurnoForm = () => {
   const { id } = useParams();
   const location = useLocation();
   const { turnos, agregarTurno, actualizarTurno } = useTurnos();
-  const { pacientes, pacientesActivos } = usePacientes();
+  const { pacientes, pacientesActivos, agregarPaciente } = usePacientes();
   
   const isEditing = !!id;
 
@@ -76,6 +76,21 @@ const TurnoForm = () => {
   const selectRef = useRef(null);
   const searchInputRef = useRef(null);
   const [pacienteOption, setPacienteOption] = useState(null);
+  const [showNuevoPacienteModal, setShowNuevoPacienteModal] = useState(false);
+  const [guardandoPaciente, setGuardandoPaciente] = useState(false);
+  const [nuevoPacienteErrors, setNuevoPacienteErrors] = useState({});
+  const [nuevoPacienteData, setNuevoPacienteData] = useState({
+    apellido: '',
+    nombre: '',
+    dni: '',
+    fechaNacimiento: '',
+    genero: '',
+    telefono: '',
+    email: '',
+    direccion: '',
+    obraSocial: '',
+    numeroAfiliado: '',
+  });
   const loadTimer = useRef(null);
   
   // Ref para evitar re-inicializar el formulario si ya se cargaron los datos.
@@ -364,9 +379,68 @@ const TurnoForm = () => {
     }
   };
 
+  const resetNuevoPacienteModal = () => {
+    setNuevoPacienteData({
+      apellido: '',
+      nombre: '',
+      dni: '',
+      fechaNacimiento: '',
+      genero: '',
+      telefono: '',
+      email: '',
+      direccion: '',
+      obraSocial: '',
+      numeroAfiliado: '',
+    });
+    setNuevoPacienteErrors({});
+  };
+
+  const validateNuevoPaciente = () => {
+    const nextErrors = {};
+    if (!nuevoPacienteData.apellido.trim()) nextErrors.apellido = 'El apellido es requerido';
+    if (!nuevoPacienteData.nombre.trim()) nextErrors.nombre = 'El nombre es requerido';
+    if (!/^\d{7,8}$/.test(nuevoPacienteData.dni.trim())) nextErrors.dni = 'El DNI debe tener 7 u 8 dígitos';
+    if (!nuevoPacienteData.fechaNacimiento) nextErrors.fechaNacimiento = 'La fecha de nacimiento es requerida';
+    if (!nuevoPacienteData.genero) nextErrors.genero = 'El género es requerido';
+    if (!nuevoPacienteData.telefono.trim()) nextErrors.telefono = 'El teléfono es requerido';
+    if (nuevoPacienteData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nuevoPacienteData.email)) nextErrors.email = 'El email no es válido';
+    const duplicated = pacientes.find((p) => String(p.dni).trim() === nuevoPacienteData.dni.trim());
+    if (duplicated) nextErrors.dni = 'Ya existe un paciente con ese DNI';
+    setNuevoPacienteErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleGuardarNuevoPaciente = async () => {
+    if (guardandoPaciente) return;
+    if (!validateNuevoPaciente()) return;
+    try {
+      setGuardandoPaciente(true);
+      const payload = {
+        ...nuevoPacienteData,
+        nombreCompleto: `${nuevoPacienteData.nombre.trim()} ${nuevoPacienteData.apellido.trim()}`.trim(),
+      };
+      const nuevo = await agregarPaciente(payload);
+      const option = {
+        value: nuevo.id,
+        label: `${nuevo.apellido ? `${nuevo.apellido}, ${nuevo.nombre}` : nuevo.nombreCompleto} - DNI: ${nuevo.dni}`,
+        paciente: nuevo,
+      };
+      setPacienteOption(option);
+      setFormData((prev) => ({ ...prev, pacienteId: nuevo.id }));
+      setShowNuevoPacienteModal(false);
+      resetNuevoPacienteModal();
+      Swal.fire({ title: 'Paciente creado', text: 'Se seleccionó automáticamente para este turno.', icon: 'success', timer: 1500, showConfirmButton: false });
+    } catch (error) {
+      Swal.fire('Error', 'No se pudo guardar el paciente', 'error');
+    } finally {
+      setGuardandoPaciente(false);
+    }
+  };
+
   const pacienteSeleccionado = pacientes.find(p => p.id === formData.pacienteId);
 
   return (
+    <>
     <Container>
       <Row className="mb-4">
         <Col>
@@ -420,6 +494,17 @@ const TurnoForm = () => {
                       {errors.pacienteId}
                     </div>
                   )}
+                  <div className="mt-2">
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      onClick={() => setShowNuevoPacienteModal(true)}
+                      disabled={submitting}
+                    >
+                      <FaUserPlus className="me-2" />
+                      Nuevo paciente
+                    </Button>
+                  </div>
                   {formData.pacienteId && (
                     <div className="mt-2">
                       <small className={pacienteSeleccionado?.activo === false ? 'text-warning' : 'text-success'}>
@@ -568,6 +653,73 @@ const TurnoForm = () => {
         <small>* Campos requeridos</small>
       </div>
     </Container>
+    <Modal show={showNuevoPacienteModal} onHide={() => { if (!guardandoPaciente) { setShowNuevoPacienteModal(false); resetNuevoPacienteModal(); } }} backdrop="static">
+      <Modal.Header closeButton={!guardandoPaciente}>
+        <Modal.Title>Nuevo Paciente</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Apellido *</Form.Label>
+              <Form.Control value={nuevoPacienteData.apellido} onChange={(e) => setNuevoPacienteData((p) => ({ ...p, apellido: e.target.value }))} isInvalid={!!nuevoPacienteErrors.apellido} />
+              <Form.Control.Feedback type="invalid">{nuevoPacienteErrors.apellido}</Form.Control.Feedback>
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Nombre *</Form.Label>
+              <Form.Control value={nuevoPacienteData.nombre} onChange={(e) => setNuevoPacienteData((p) => ({ ...p, nombre: e.target.value }))} isInvalid={!!nuevoPacienteErrors.nombre} />
+              <Form.Control.Feedback type="invalid">{nuevoPacienteErrors.nombre}</Form.Control.Feedback>
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>DNI *</Form.Label>
+              <Form.Control value={nuevoPacienteData.dni} maxLength={8} onChange={(e) => setNuevoPacienteData((p) => ({ ...p, dni: e.target.value.replace(/\D/g, '') }))} isInvalid={!!nuevoPacienteErrors.dni} />
+              <Form.Control.Feedback type="invalid">{nuevoPacienteErrors.dni}</Form.Control.Feedback>
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Fecha de Nacimiento *</Form.Label>
+              <Form.Control type="date" value={nuevoPacienteData.fechaNacimiento} onChange={(e) => setNuevoPacienteData((p) => ({ ...p, fechaNacimiento: e.target.value }))} isInvalid={!!nuevoPacienteErrors.fechaNacimiento} />
+              <Form.Control.Feedback type="invalid">{nuevoPacienteErrors.fechaNacimiento}</Form.Control.Feedback>
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Género *</Form.Label>
+              <Form.Select value={nuevoPacienteData.genero} onChange={(e) => setNuevoPacienteData((p) => ({ ...p, genero: e.target.value }))} isInvalid={!!nuevoPacienteErrors.genero}>
+                <option value="">Seleccione...</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Femenino">Femenino</option>
+                <option value="Otro">Otro</option>
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">{nuevoPacienteErrors.genero}</Form.Control.Feedback>
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Teléfono *</Form.Label>
+              <Form.Control value={nuevoPacienteData.telefono} onChange={(e) => setNuevoPacienteData((p) => ({ ...p, telefono: e.target.value }))} isInvalid={!!nuevoPacienteErrors.telefono} />
+              <Form.Control.Feedback type="invalid">{nuevoPacienteErrors.telefono}</Form.Control.Feedback>
+            </Form.Group>
+          </Col>
+        </Row>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={() => { setShowNuevoPacienteModal(false); resetNuevoPacienteModal(); }} disabled={guardandoPaciente}>Cancelar</Button>
+        <Button variant="primary" onClick={handleGuardarNuevoPaciente} disabled={guardandoPaciente}>
+          {guardandoPaciente ? 'Guardando...' : 'Guardar Paciente'}
+        </Button>
+      </Modal.Footer>
+    </Modal>
+    </>
   );
 };
 
