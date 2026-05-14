@@ -89,16 +89,23 @@ const PacienteForm = () => {
           setIsEditing(true);
 
           // Lógica de migración inteligente para registros viejos
+          const fullName = paciente.nombre_completo || paciente.nombreCompleto || '';
           let nombre = paciente.nombre || '';
           let apellido = paciente.apellido || '';
-          
-          if (!nombre && !apellido && paciente.nombreCompleto) {
-            const partes = paciente.nombreCompleto.trim().split(' ');
-            if (partes.length > 1) {
-              apellido = partes.pop(); // Tomamos la última palabra como apellido
-              nombre = partes.join(' ');
+
+          if (!nombre && !apellido && fullName) {
+            if (fullName.includes(',')) {
+              const [ap, nom] = fullName.split(',').map(s => s.trim());
+              apellido = ap;
+              nombre = nom;
             } else {
-              nombre = partes[0];
+              const partes = fullName.trim().split(/\s+/);
+              if (partes.length > 1) {
+                apellido = partes.pop();
+                nombre = partes.join(' ');
+              } else {
+                nombre = partes[0];
+              }
             }
           }
 
@@ -106,14 +113,14 @@ const PacienteForm = () => {
             nombre: nombre,
             apellido: apellido,
             dni: paciente.dni || '',
-            fechaNacimiento: formatDateForInput(paciente.fechaNacimiento),
+            fechaNacimiento: formatDateForInput(paciente.fecha_nacimiento || paciente.fechaNacimiento),
             genero: paciente.genero || '',
             telefono: paciente.telefono || '',
             email: paciente.email || '',
             direccion: paciente.direccion || '',
-            obraSocial: paciente.obraSocial || '',
-            numeroAfiliado: paciente.numeroAfiliado || '',
-            fechaCreacion: formatDateTimeForDisplay(paciente.fechaCreacion)
+            obraSocial: paciente.obra_social || paciente.obraSocial || '',
+            numeroAfiliado: paciente.numero_afiliado || paciente.numeroAfiliado || '',
+            fechaCreacion: formatDateTimeForDisplay(paciente.fecha_creacion || paciente.fechaCreacion)
           });
         });
       } else if (pacientes.length > 0) {
@@ -235,8 +242,15 @@ const PacienteForm = () => {
       setSubmitting(true);
 
       const dataToSubmit = {
-        ...formData,
-        nombreCompleto: `${formData.nombre.trim()} ${formData.apellido.trim()}`.trim()
+        nombreCompleto: `${formData.apellido.trim()}, ${formData.nombre.trim()}`,
+        dni: formData.dni.trim(),
+        fechaNacimiento: formData.fechaNacimiento,
+        genero: formData.genero,
+        telefono: formData.telefono.trim(),
+        email: formData.email.trim(),
+        direccion: formData.direccion.trim(),
+        obraSocial: formData.obraSocial.trim(),
+        numeroAfiliado: formData.numeroAfiliado.trim()
       };
 
       if (isEditing) {

@@ -421,8 +421,15 @@ const TurnoForm = () => {
     try {
       setGuardandoPaciente(true);
       const payload = {
-        ...nuevoPacienteData,
-        nombreCompleto: `${nuevoPacienteData.nombre.trim()} ${nuevoPacienteData.apellido.trim()}`.trim(),
+        nombreCompleto: `${nuevoPacienteData.apellido.trim()}, ${nuevoPacienteData.nombre.trim()}`,
+        dni: nuevoPacienteData.dni.trim(),
+        fechaNacimiento: nuevoPacienteData.fechaNacimiento,
+        genero: nuevoPacienteData.genero,
+        telefono: nuevoPacienteData.telefono.trim(),
+        email: nuevoPacienteData.email.trim(),
+        direccion: nuevoPacienteData.direccion.trim(),
+        obraSocial: nuevoPacienteData.obraSocial.trim(),
+        numeroAfiliado: nuevoPacienteData.numeroAfiliado.trim()
       };
       const nuevo = await agregarPaciente(payload);
       const option = {

@@ -119,16 +119,21 @@ const PacientesList = () => {
     if (p.apellido) {
       return `${p.apellido}${p.nombre ? `, ${p.nombre}` : ''}`;
     }
-    if (!p.nombreCompleto) return '';
+    const fullName = p.nombre_completo || p.nombreCompleto;
+    if (!fullName) return '';
+
+    if (fullName.includes(',')) {
+      return fullName;
+    }
     
     // Intento de extraer el apellido de nombreCompleto para registros legacy
-    const partes = p.nombreCompleto.trim().split(/\s+/);
+    const partes = fullName.trim().split(/\s+/);
     if (partes.length > 1) {
       const apellido = partes.pop();
       const nombre = partes.join(' ');
       return `${apellido}, ${nombre}`;
     }
-    return p.nombreCompleto;
+    return fullName;
   };
 
   const normalizeName = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -247,14 +252,14 @@ const PacientesList = () => {
                         <small className="text-muted">{paciente.email}</small>
                       </td>
                       <td>{paciente.dni}</td>
-                      <td>{calcularEdad(paciente.fechaNacimiento)} años</td>
+                      <td>{calcularEdad(paciente.fecha_nacimiento || paciente.fechaNacimiento)} años</td>
                       <td>{paciente.telefono}</td>
                       <td>
-                        {paciente.obraSocial || '-'}
-                        {paciente.numeroAfiliado && (
+                        {(paciente.obra_social || paciente.obraSocial) || '-'}
+                        {(paciente.numero_afiliado || paciente.numeroAfiliado) && (
                           <>
                             <br />
-                            <small className="text-muted">N° {paciente.numeroAfiliado}</small>
+                            <small className="text-muted">N° {paciente.numero_afiliado || paciente.numeroAfiliado}</small>
                           </>
                         )}
                       </td>
