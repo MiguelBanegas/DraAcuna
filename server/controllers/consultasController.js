@@ -1,6 +1,30 @@
 import * as db from "../db/index.js";
 
+let ensurePacientesActivoColumnPromise;
+let ensureConsultasExamenFisicoColumnPromise;
+
+const ensurePacientesActivoColumn = async () => {
+  if (!ensurePacientesActivoColumnPromise) {
+    ensurePacientesActivoColumnPromise = db.query(`
+      ALTER TABLE pacientes
+      ADD COLUMN IF NOT EXISTS activo BOOLEAN NOT NULL DEFAULT TRUE
+    `);
+  }
+  await ensurePacientesActivoColumnPromise;
+};
+
+const ensureConsultasExamenFisicoColumn = async () => {
+  if (!ensureConsultasExamenFisicoColumnPromise) {
+    ensureConsultasExamenFisicoColumnPromise = db.query(`
+      ALTER TABLE consultas
+      ADD COLUMN IF NOT EXISTS examen_fisico TEXT
+    `);
+  }
+  await ensureConsultasExamenFisicoColumnPromise;
+};
+
 const ensurePacienteActivo = async (pacienteId) => {
+  await ensurePacientesActivoColumn();
   const { rows } = await db.query("SELECT activo FROM pacientes WHERE id = $1", [pacienteId]);
   if (rows.length === 0) {
     return { ok: false, error: "Paciente no encontrado" };
@@ -75,6 +99,7 @@ export const createConsulta = async (req, res) => {
     proxima_consulta,
   } = req.body;
   try {
+    await ensureConsultasExamenFisicoColumn();
     const pacienteValidation = await ensurePacienteActivo(paciente_id);
     if (!pacienteValidation.ok) {
       return res.status(400).json({ error: pacienteValidation.error });
@@ -90,11 +115,11 @@ export const createConsulta = async (req, res) => {
     const values = [
       paciente_id,
       fecha_hora,
-      motivo,
-      examen_fisico,
-      diagnostico,
-      tratamiento,
-      observaciones,
+      motivo || null,
+      examen_fisico || null,
+      diagnostico || null,
+      tratamiento || null,
+      observaciones || null,
       signos_vitales ? JSON.stringify(signos_vitales) : null,
       proxima_consulta || null, // ? Cambiar "" por null
     ];
@@ -122,6 +147,7 @@ export const updateConsulta = async (req, res) => {
   } = req.body;
 
   try {
+    await ensureConsultasExamenFisicoColumn();
     if (paciente_id) {
       const pacienteValidation = await ensurePacienteActivo(paciente_id);
       if (!pacienteValidation.ok) {
@@ -138,11 +164,11 @@ export const updateConsulta = async (req, res) => {
     `;
 
     const values = [
-      motivo,
-      examen_fisico,
-      diagnostico,
-      tratamiento,
-      observaciones,
+      motivo || null,
+      examen_fisico || null,
+      diagnostico || null,
+      tratamiento || null,
+      observaciones || null,
       signos_vitales ? JSON.stringify(signos_vitales) : null,
       proxima_consulta || null,
       fecha_hora,
