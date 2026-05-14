@@ -15,6 +15,12 @@ Editá el archivo `public/version.json` con el nuevo número:
 
 > [!NOTE]
 > Lo que dispara la notificación en el navegador de los pacientes es el cambio en el campo `"version"`.
+> El `"timestamp"` asegura que el navegador no use una copia vieja guardada en su memoria (caché).
+
+### 💡 Cómo obtener el timestamp actual:
+- **En el navegador:** Abrir consola (F12) y ejecutar `Date.now()`.
+- **En la terminal:** Ejecutar `node -e "console.log(Date.now())"`.
+- **En PowerShell:** Ejecutar `[DateTimeOffset]::Now.ToUnixTimeMilliseconds()`.
 
 ## 2. Guardar el cambio en Git
 
