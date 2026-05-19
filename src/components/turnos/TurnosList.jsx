@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Table, Button, Form, InputGroup, Container, Row, Col, Card, Badge, Pagination } from 'react-bootstrap';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaCheck, FaTimes, FaClock, FaCheckDouble } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaCheck, FaTimes, FaClock, FaCheckDouble, FaWhatsapp } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useTurnos } from '../../context/TurnosContext';
 import { usePacientes } from '../../context/PacientesContext';
@@ -151,6 +151,63 @@ const TurnosList = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const WHATSAPP_COUNTRY_CODE = '54';
+  const WHATSAPP_SIGNATURE = import.meta.env.VITE_WHATSAPP_SIGNATURE || 'Consultorio Dra. Ana Acuña';
+  const normalizePhoneForWhatsApp = (phone) => {
+    const digits = String(phone || '').replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.startsWith(WHATSAPP_COUNTRY_CODE)) return digits;
+    return `${WHATSAPP_COUNTRY_CODE}${digits}`;
+  };
+
+  const buildTurnoWhatsappMessage = ({ pacienteNombre, fechaHora, duracion, motivo }) => {
+    const fecha = new Date(fechaHora);
+    const fechaStr = fecha.toLocaleDateString('es-AR');
+    const horaStr = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    return `Hola ${pacienteNombre}, te recordamos tu turno:
+Fecha: ${fechaStr}
+Hora: ${horaStr}
+Duración: ${duracion || 30} min
+Motivo: ${motivo || '-'}
+
+${WHATSAPP_SIGNATURE}`;
+  };
+
+  const handleEnviarWhatsapp = async (turno, paciente) => {
+    const telefono = normalizePhoneForWhatsApp(paciente?.telefono);
+    if (!telefono) {
+      await Swal.fire('Sin teléfono', 'El paciente no tiene teléfono cargado para enviar WhatsApp.', 'warning');
+      return;
+    }
+    const pacienteNombre = paciente.apellido ? `${paciente.apellido}, ${paciente.nombre}` : paciente.nombreCompleto;
+    const message = buildTurnoWhatsappMessage({
+      pacienteNombre,
+      fechaHora: turno.fechaHora,
+      duracion: turno.duracion,
+      motivo: turno.motivo
+    });
+    const action = await Swal.fire({
+      title: 'Enviar aviso',
+      text: 'Puede abrir WhatsApp o copiar el mensaje.',
+      icon: 'question',
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: 'Abrir WhatsApp',
+      denyButtonText: 'Copiar mensaje',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (action.isConfirmed) {
+      window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(message)}`, 'draacuna-whatsapp', 'noopener,noreferrer');
+      return;
+    }
+
+    if (action.isDenied) {
+      await navigator.clipboard.writeText(message);
+      await Swal.fire('Copiado', 'Mensaje copiado al portapapeles.', 'success');
+    }
   };
 
   const estadoColor = {
@@ -376,6 +433,15 @@ const TurnosList = () => {
                                 )}
                               </Button>
                             )}
+                            <Button
+                              variant="outline-success"
+                              size="sm"
+                              onClick={() => handleEnviarWhatsapp(turno, paciente)}
+                              title="Enviar aviso por WhatsApp"
+                              disabled={pendingActionId !== null || !paciente}
+                            >
+                              <FaWhatsapp />
+                            </Button>
                             <Button
                               variant="outline-primary"
                               size="sm"

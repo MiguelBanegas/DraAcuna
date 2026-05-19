@@ -127,4 +127,9 @@ describe('TurnosList', () => {
       expect(Swal.fire).toHaveBeenCalledTimes(2);
     });
   }, 20000);
+
+  it('muestra botón para enviar aviso por WhatsApp', () => {
+    render(<TurnosList />);
+    expect(screen.getByTitle(/Enviar aviso por WhatsApp/i)).toBeInTheDocument();
+  });
 });

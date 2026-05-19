@@ -75,6 +75,7 @@ describe('TurnoForm', () => {
       actualizarTurno,
     });
     Swal.fire.mockResolvedValue({});
+    vi.spyOn(window, 'open').mockImplementation(() => null);
   });
 
   it('bloquea el envío repetido mientras guarda', async () => {

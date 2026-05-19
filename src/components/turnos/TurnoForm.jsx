@@ -24,6 +24,29 @@ const isValidDni = (value) => {
   return /^\d{7,8}$/.test(dni) && !/^0+$/.test(dni);
 };
 
+const WHATSAPP_COUNTRY_CODE = '54';
+const WHATSAPP_SIGNATURE = import.meta.env.VITE_WHATSAPP_SIGNATURE || 'Consultorio Dra. Ana Acuña';
+
+const normalizePhoneForWhatsApp = (phone) => {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith(WHATSAPP_COUNTRY_CODE)) return digits;
+  return `${WHATSAPP_COUNTRY_CODE}${digits}`;
+};
+
+const buildTurnoWhatsappMessage = ({ pacienteNombre, fechaHora, duracion, motivo }) => {
+  const fecha = new Date(fechaHora);
+  const fechaStr = fecha.toLocaleDateString('es-AR');
+  const horaStr = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  return `Hola ${pacienteNombre}, te recordamos tu turno:
+Fecha: ${fechaStr}
+Hora: ${horaStr}
+Duración: ${duracion} min
+Motivo: ${motivo}
+
+${WHATSAPP_SIGNATURE}`;
+};
+
 const TurnoForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -326,6 +349,21 @@ const TurnoForm = () => {
         await agregarTurno(formToSubmit);
       }
 
+      if (!isEditing) {
+        const sendWhatsappResult = await Swal.fire({
+          title: 'Turno guardado',
+          text: '¿Desea enviar aviso por WhatsApp al paciente?',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, enviar',
+          cancelButtonText: 'No enviar'
+        });
+
+        if (sendWhatsappResult.isConfirmed) {
+          await handleWhatsappTurno(formToSubmit);
+        }
+      }
+
       await Swal.fire({
         title: '¡Guardado!',
         text: isEditing ? 'El turno ha sido actualizado.' : 'El turno ha sido programado.',
@@ -450,6 +488,46 @@ const TurnoForm = () => {
   };
 
   const pacienteSeleccionado = pacientes.find(p => p.id === formData.pacienteId);
+
+  const handleWhatsappTurno = async (turnoData) => {
+    if (!pacienteSeleccionado) return;
+    const phone = normalizePhoneForWhatsApp(pacienteSeleccionado.telefono);
+    if (!phone) {
+      await Swal.fire('Sin teléfono', 'El paciente no tiene teléfono cargado para enviar WhatsApp.', 'warning');
+      return;
+    }
+
+    const pacienteNombre = pacienteSeleccionado.apellido
+      ? `${pacienteSeleccionado.apellido}, ${pacienteSeleccionado.nombre}`
+      : pacienteSeleccionado.nombreCompleto;
+    const message = buildTurnoWhatsappMessage({
+      pacienteNombre,
+      fechaHora: turnoData.fechaHora,
+      duracion: turnoData.duracion,
+      motivo: turnoData.motivo
+    });
+    const action = await Swal.fire({
+      title: 'Enviar aviso',
+      text: 'Puede abrir WhatsApp o copiar el mensaje.',
+      icon: 'question',
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: 'Abrir WhatsApp',
+      denyButtonText: 'Copiar mensaje',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (action.isConfirmed) {
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      window.open(url, 'draacuna-whatsapp', 'noopener,noreferrer');
+      return;
+    }
+
+    if (action.isDenied) {
+      await navigator.clipboard.writeText(message);
+      await Swal.fire('Copiado', 'Mensaje copiado al portapapeles.', 'success');
+    }
+  };
 
   return (
     <>
