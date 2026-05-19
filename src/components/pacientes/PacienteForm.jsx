@@ -23,6 +23,14 @@ const formatDateTimeForDisplay = (value) => {
   return parsed.toISOString();
 };
 
+const getTodayForDateInput = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // Función auxiliar para capitalizar la primera letra de cada palabra
 const capitalizeEachWord = (text) => {
   if (!text) return '';
@@ -48,7 +56,7 @@ const PacienteForm = () => {
     nombre: '',
     apellido: '',
     dni: '',
-    fechaNacimiento: '',
+    fechaNacimiento: getTodayForDateInput(),
     genero: '',
     telefono: '',
     email: '',

@@ -113,6 +113,21 @@ describe('PacienteForm', () => {
     expect(screen.getByText(/Perez, Ana/i)).toBeInTheDocument();
   });
 
+  it('en nuevo paciente precarga fecha de nacimiento con la fecha actual', () => {
+    mockParams.id = undefined;
+    usePacientes.mockReturnValue({
+      pacientes: [],
+      pacientesActivos: [],
+      agregarPaciente,
+      actualizarPaciente,
+    });
+
+    render(<PacienteForm />);
+
+    const fechaNacimientoInput = document.querySelector('input[name="fechaNacimiento"]');
+    expect(fechaNacimientoInput).toHaveValue('2026-05-18');
+  });
+
   it('bloquea envíos repetidos mientras el paciente se está guardando', async () => {
     mockParams.id = undefined;
     agregarPaciente.mockImplementation(
