@@ -2,13 +2,12 @@ import { useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { FaSyncAlt } from 'react-icons/fa';
 import 'react-toastify/dist/ReactToastify.css';
-import { APP_VERSION } from '../../version';
 
 const RELOAD_GUARD_KEY = 'dra-acuna-version-reload';
+const CURRENT_VERSION_KEY = 'dra-acuna-current-version';
 
 const UpdateNotifier = () => {
   const versionRef = useRef(null);
-  const isFirstFetch = useRef(true);
 
   const checkVersion = useCallback(async () => {
     try {
@@ -18,17 +17,18 @@ const UpdateNotifier = () => {
       const data = await response.json();
       const newVersion = data.version;
       const reloadGuardVersion = sessionStorage.getItem(RELOAD_GUARD_KEY);
+      const currentVersion = localStorage.getItem(CURRENT_VERSION_KEY);
 
-      if (isFirstFetch.current) {
-        if (newVersion !== APP_VERSION && reloadGuardVersion !== newVersion) {
+      if (!versionRef.current) {
+        if (currentVersion && newVersion !== currentVersion && reloadGuardVersion !== newVersion) {
           sessionStorage.setItem(RELOAD_GUARD_KEY, newVersion);
           window.location.reload();
           return;
         }
 
         sessionStorage.removeItem(RELOAD_GUARD_KEY);
-        versionRef.current = APP_VERSION;
-        isFirstFetch.current = false;
+        versionRef.current = newVersion;
+        localStorage.setItem(CURRENT_VERSION_KEY, newVersion);
       } else if (versionRef.current && newVersion !== versionRef.current) {
         console.log(`¡Nueva versión detectada! ${versionRef.current} -> ${newVersion}`);
         
@@ -41,7 +41,10 @@ const UpdateNotifier = () => {
               </div>
               <button 
                 className="btn btn-primary btn-sm d-flex align-items-center justify-content-center gap-2"
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  localStorage.setItem(CURRENT_VERSION_KEY, newVersion);
+                  window.location.reload();
+                }}
               >
                 <FaSyncAlt /> Actualizar ahora
               </button>
@@ -58,6 +61,7 @@ const UpdateNotifier = () => {
           );
         }
         versionRef.current = newVersion;
+        localStorage.setItem(CURRENT_VERSION_KEY, newVersion);
       }
     } catch (error) {
       console.error('Error al verificar versión:', error);
