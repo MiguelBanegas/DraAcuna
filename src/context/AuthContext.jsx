@@ -31,11 +31,11 @@ export const AuthProvider = ({ children }) => {
     });
   }, []);
 
-  // Sistema de cierre de sesión por inactividad (10 minutos)
+  // Sistema de cierre de sesión por inactividad (60 minutos)
   useEffect(() => {
     if (!user) return; // Solo activo si hay sesión iniciada
 
-    const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutos en milisegundos
+    const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 60 minutos en milisegundos
     let inactivityTimer;
 
     const resetTimer = () => {
