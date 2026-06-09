@@ -59,6 +59,15 @@ const UpdateNotifier = () => {
         theme: 'colored'
       }
     );
+
+    // Auto-reload después de 5 segundos si no hay interacción
+    setTimeout(() => {
+      if (toast.isActive('update-toast')) {
+        localStorage.removeItem(SNOOZE_UNTIL_KEY);
+        localStorage.setItem(CURRENT_VERSION_KEY, newVersion);
+        window.location.reload();
+      }
+    }, 3000);
   }, []);
 
   const checkVersion = useCallback(async () => {
