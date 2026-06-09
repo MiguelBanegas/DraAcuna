@@ -24,6 +24,15 @@ const isValidDni = (value) => {
   return /^\d{7,8}$/.test(dni) && !/^0+$/.test(dni);
 };
 
+const capitalizeEachWord = (text) => {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 const WHATSAPP_COUNTRY_CODE = '54';
 const WHATSAPP_SIGNATURE = import.meta.env.VITE_WHATSAPP_SIGNATURE || 'Consultorio Dra. Ana Acuña';
 
@@ -458,8 +467,12 @@ const TurnoForm = () => {
     if (!validateNuevoPaciente()) return;
     try {
       setGuardandoPaciente(true);
+      const apellidoNormalizado = capitalizeEachWord(nuevoPacienteData.apellido.trim());
+      const nombreNormalizado = capitalizeEachWord(nuevoPacienteData.nombre.trim());
       const payload = {
-        nombreCompleto: `${nuevoPacienteData.apellido.trim()}, ${nuevoPacienteData.nombre.trim()}`,
+        nombreCompleto: `${apellidoNormalizado}, ${nombreNormalizado}`,
+        apellido: apellidoNormalizado,
+        nombre: nombreNormalizado,
         dni: nuevoPacienteData.dni.trim(),
         fechaNacimiento: nuevoPacienteData.fechaNacimiento,
         genero: nuevoPacienteData.genero,
@@ -752,14 +765,14 @@ const TurnoForm = () => {
           <Col md={6}>
             <Form.Group className="mb-3">
               <Form.Label>Apellido *</Form.Label>
-              <Form.Control value={nuevoPacienteData.apellido} onChange={(e) => setNuevoPacienteData((p) => ({ ...p, apellido: e.target.value }))} isInvalid={!!nuevoPacienteErrors.apellido} />
+              <Form.Control value={nuevoPacienteData.apellido} onChange={(e) => setNuevoPacienteData((p) => ({ ...p, apellido: capitalizeEachWord(e.target.value) }))} isInvalid={!!nuevoPacienteErrors.apellido} />
               <Form.Control.Feedback type="invalid">{nuevoPacienteErrors.apellido}</Form.Control.Feedback>
             </Form.Group>
           </Col>
           <Col md={6}>
             <Form.Group className="mb-3">
               <Form.Label>Nombre *</Form.Label>
-              <Form.Control value={nuevoPacienteData.nombre} onChange={(e) => setNuevoPacienteData((p) => ({ ...p, nombre: e.target.value }))} isInvalid={!!nuevoPacienteErrors.nombre} />
+              <Form.Control value={nuevoPacienteData.nombre} onChange={(e) => setNuevoPacienteData((p) => ({ ...p, nombre: capitalizeEachWord(e.target.value) }))} isInvalid={!!nuevoPacienteErrors.nombre} />
               <Form.Control.Feedback type="invalid">{nuevoPacienteErrors.nombre}</Form.Control.Feedback>
             </Form.Group>
           </Col>

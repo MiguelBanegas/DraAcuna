@@ -249,8 +249,12 @@ const PacienteForm = () => {
     try {
       setSubmitting(true);
 
+      const apellidoNormalizado = capitalizeEachWord(formData.apellido.trim());
+      const nombreNormalizado = capitalizeEachWord(formData.nombre.trim());
       const dataToSubmit = {
-        nombreCompleto: `${formData.apellido.trim()}, ${formData.nombre.trim()}`,
+        nombreCompleto: `${apellidoNormalizado}, ${nombreNormalizado}`,
+        apellido: apellidoNormalizado,
+        nombre: nombreNormalizado,
         dni: formData.dni.trim(),
         fechaNacimiento: formData.fechaNacimiento,
         genero: formData.genero,
