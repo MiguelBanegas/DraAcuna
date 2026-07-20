@@ -63,7 +63,7 @@ const PacienteForm = () => {
     direccion: '',
     obraSocial: '',
     numeroAfiliado: '',
-    fechaCreacion: ''
+    fecha_registro: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -91,12 +91,14 @@ const PacienteForm = () => {
   useEffect(() => {
     if (id) {
       const paciente = pacientes.find(p => p.id == id);
+      
       if (paciente) {
         // Deferir setState para evitar setState síncrono en el efecto
         Promise.resolve().then(() => {
           setIsEditing(true);
-
-          // Lógica de migración inteligente para registros viejos
+//console.log('fecha_registro del paciente seleccionado:', paciente?.fecha_registro || paciente?.fecha_registro);
+//console.log('Paciente seleccionado:', paciente);  
+// Lógica de migración inteligente para registros viejos
           const fullName = paciente.nombre_completo || paciente.nombreCompleto || '';
           let nombre = paciente.nombre || '';
           let apellido = paciente.apellido || '';
@@ -128,7 +130,7 @@ const PacienteForm = () => {
             direccion: paciente.direccion || '',
             obraSocial: paciente.obra_social || paciente.obraSocial || '',
             numeroAfiliado: paciente.numero_afiliado || paciente.numeroAfiliado || '',
-            fechaCreacion: formatDateTimeForDisplay(paciente.fecha_creacion || paciente.fechaCreacion)
+            fecha_registro: formatDateTimeForDisplay(paciente.fecha_registro || paciente.fecha_registro)
           });
         });
       } else if (pacientes.length > 0) {
@@ -319,10 +321,10 @@ const PacienteForm = () => {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Fecha registrada</Form.Label>
+                    <Form.Label>Fecha de Registro</Form.Label>
                     <Form.Control
                       type="text"
-                      value={formatearFechaHora(formData.fechaCreacion)}
+                      value={formatearFechaHora(formData.fecha_registro)}
                       readOnly
                     />
                   </Form.Group>

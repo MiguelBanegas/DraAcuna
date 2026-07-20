@@ -19,7 +19,7 @@ const mapPacienteFromAPI = (p) => ({
   direccion: p.direccion,
   obraSocial: p.obra_social,
   numeroAfiliado: p.numero_afiliado,
-  fechaCreacion: p.fecha_creacion,
+  fecha_registro: p.fecha_registro,
   activo: p.activo !== false,
 });
 

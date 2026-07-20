@@ -122,6 +122,14 @@ const PacienteDetalle = () => {
             <Card.Body>
               <ListGroup variant="flush">
                 <ListGroup.Item>
+  <div className="d-flex justify-content-between">
+    <span className="text-muted">Fecha de Registro:</span>
+    <span>
+      {formatearFechaHora(paciente.fecha_registro || paciente.fechaCreacion || paciente.fecha_creacion)}
+    </span>
+  </div>
+</ListGroup.Item>
+                <ListGroup.Item>
                   <div className="d-flex justify-content-between">
                     <span className="text-muted">
                       <FaIdCard className="me-2" />
