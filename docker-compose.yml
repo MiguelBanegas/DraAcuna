@@ -1,39 +1,19 @@
 services:
-  postgres:
-    image: postgres:17-alpine
-    container_name: draacuna-postgres
-    environment:
-      POSTGRES_DB: consultorio
-      POSTGRES_USER: dra_acuna
-      POSTGRES_PASSWORD: acuna123
-
-    ports:
-      - "5433:5432"
-      
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dra_acuna -d consultorio"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-    restart: unless-stopped
-
+  
   api:
-    build: .
+    build: 
+      context: ./server
+      dockerfile: Dockerfile
+
     container_name: draacuna-api
-    depends_on:
-      postgres:
-        condition: service_healthy
+
+    working_dir: /app
+    
     ports:
       - "3000:3000"
     env_file:
       - ./server/.env
+    environment:
+      NODE_ENV: production
+      
     restart: unless-stopped
-
-
-volumes:
-  postgres_data:
-    name: draacuna-postgres-data

@@ -6,8 +6,6 @@
   "scripts": {
     "dev": "vite",
     "dev:full": "concurrently \"pnpm run server:dev\" \"pnpm run client\"",
-    "server": "node server/index.js",
-    "server:dev": "nodemon server/index.js",
     "client": "vite",
     "build": "vite build",
     "lint": "eslint .",
@@ -18,13 +16,7 @@
     "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "bootstrap": "^5.3.8",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "pg": "^8.20.0",
+    "bootstrap": "^5.3.8",    
     "react": "^19.2.6",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.6",
@@ -49,7 +41,6 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
-    "nodemon": "^3.1.14",
     "vite": "^8.0.11",
     "vitest": "^4.1.5"
   }
