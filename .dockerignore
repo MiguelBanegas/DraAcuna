@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.gitignore
+.vscode
+
+npm-debug.log
+pnpm-debug.log
+
+.env
+.env.development
+.env.production
+
+README.md
+GUIA_*.md
