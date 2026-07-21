@@ -1,7 +1,10 @@
 import { Router } from "express";
 import * as agendaExcepcionesController from "../controllers/agendaExcepcionesController.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = Router();
+
+router.use(requireAuth);
 
 router.get("/", agendaExcepcionesController.getAgendaExcepciones);
 router.post("/", agendaExcepcionesController.createAgendaExcepcion);

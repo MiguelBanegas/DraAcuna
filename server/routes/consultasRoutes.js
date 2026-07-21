@@ -1,7 +1,10 @@
 import express from "express";
 import * as consultasController from "../controllers/consultasController.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+router.use(requireAuth);
 
 router.get("/", consultasController.getAllConsultas);
 router.get("/search", consultasController.searchConsultas);

@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "dev": "dotenv -e .env.dev -- nodemon index.js",
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "docker": "dotenv -e .env.docker -- node index.js",
+    "prod": "dotenv -e .env.prod -- node index.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -15,6 +17,7 @@
     "pg": "^8.20.0"
   },
   "devDependencies": {
+    "dotenv-cli": "^11.0.0",
     "nodemon": "^3.1.14"
   }
 }
