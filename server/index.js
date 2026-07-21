@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 // Configuración de variables de entorno
-dotenv.config({ path: "./server/.env" });
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
