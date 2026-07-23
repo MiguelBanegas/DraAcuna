@@ -1,4 +1,9 @@
 services:
+  frontend:
+      env_file:
+        - ./.env.production
+
+      command: npm run preview -- --host 0.0.0.0
   api:
     env_file:
       - ./server/.env.prod

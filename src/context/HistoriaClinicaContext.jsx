@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as historiaClinicaService from '../services/historiaClinicaService';
+import { useAuth } from './AuthContext';
 
 const HistoriaClinicaContext = createContext();
 
@@ -12,6 +13,7 @@ export const useHistoriaClinica = () => {
 };
 
 export const HistoriaClinicaProvider = ({ children }) => {
+  const { loading: authLoading, isAuthenticated } = useAuth();
   const [historiasClinicas, setHistoriasClinicas] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,8 +30,10 @@ export const HistoriaClinicaProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated()) return;
     cargarHistorias();
-  }, [cargarHistorias]);
+  }, [authLoading, isAuthenticated, cargarHistorias]);
 
   const obtenerHistoriaClinicaPorPaciente = async (pacienteId) => {
     try {

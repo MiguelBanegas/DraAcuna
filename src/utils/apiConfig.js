@@ -5,7 +5,7 @@ const getApiUrl = () => {
   if (import.meta.env.PROD) {
     return "/api";
   }
-  return "http://localhost:3001/api";
+  return "http://localhost:3000/api";
 };
 
 const API_URL = getApiUrl();

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as turnosService from '../services/turnosService';
+import { useAuth } from './AuthContext';
 
 const TurnosContext = createContext();
 
@@ -12,6 +13,7 @@ export const useTurnos = () => {
 };
 
 export const TurnosProvider = ({ children }) => {
+  const { loading: authLoading, isAuthenticated } = useAuth();
   const [turnos, setTurnos] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,8 +30,10 @@ export const TurnosProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated()) return;
     cargarTurnos();
-  }, [cargarTurnos]);
+  }, [authLoading, isAuthenticated, cargarTurnos]);
 
   const agregarTurno = async (turnoData) => {
     try {

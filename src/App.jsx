@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { PacientesProvider } from './context/PacientesContext';
 import { ConsultasProvider } from './context/ConsultasContext';
 import { TurnosProvider } from './context/TurnosContext';
@@ -25,53 +25,74 @@ import HistoriaClinicaDetalle from './components/historiaClinica/HistoriaClinica
 import Cuenta from './pages/Cuenta';
 import Usuarios from './pages/Usuarios';
 
+const AppShell = () => {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-vh-100 d-flex justify-content-center align-items-center bg-light">
+        <div className="text-center">
+          <div className="spinner-border text-primary mb-3" role="status">
+            <span className="visually-hidden">Cargando...</span>
+          </div>
+          <div className="fw-semibold">Inicializando sesión...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <PacientesProvider>
+      <ConsultasProvider>
+        <TurnosProvider>
+          <HistoriaClinicaProvider>
+            <div className="min-vh-100 bg-light">
+              <Navbar />
+              <UpdateNotifier />
+              <ToastContainer />
+              <Routes>
+                {/* Rutas Públicas */}
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+
+                {/* Rutas protegidas */}
+                <Route path="/pacientes" element={<ProtectedRoute><Pacientes /></ProtectedRoute>} />
+                <Route path="/pacientes/nuevo" element={<ProtectedRoute><PacienteForm /></ProtectedRoute>} />
+                <Route path="/pacientes/:id" element={<ProtectedRoute><PacienteDetalle /></ProtectedRoute>} />
+                <Route path="/pacientes/:id/editar" element={<ProtectedRoute><PacienteForm /></ProtectedRoute>} />
+
+                <Route path="/consultas" element={<ProtectedRoute><Consultas /></ProtectedRoute>} />
+                <Route path="/consultas/nueva" element={<ProtectedRoute><ConsultaForm /></ProtectedRoute>} />
+                <Route path="/consultas/:id" element={<ProtectedRoute><ConsultaDetalle /></ProtectedRoute>} />
+                <Route path="/consultas/:id/editar" element={<ProtectedRoute><ConsultaForm /></ProtectedRoute>} />
+
+                <Route path="/turnos" element={<ProtectedRoute><Turnos /></ProtectedRoute>} />
+                <Route path="/turnos/nuevo" element={<ProtectedRoute><TurnoForm /></ProtectedRoute>} />
+                <Route path="/turnos/:id/editar" element={<ProtectedRoute><TurnoForm /></ProtectedRoute>} />
+
+                <Route path="/historia-clinica" element={<ProtectedRoute><HistoriaClinica /></ProtectedRoute>} />
+                <Route path="/historia-clinica/nueva/:pacienteId" element={<ProtectedRoute><HistoriaClinicaForm /></ProtectedRoute>} />
+                <Route path="/historia-clinica/:id" element={<ProtectedRoute><HistoriaClinicaDetalle /></ProtectedRoute>} />
+                <Route path="/historia-clinica/:id/editar" element={<ProtectedRoute><HistoriaClinicaForm /></ProtectedRoute>} />
+                <Route path="/cuenta" element={<ProtectedRoute><Cuenta /></ProtectedRoute>} />
+                <Route path="/usuarios" element={<ProtectedRoute><Usuarios requireAdmin /></ProtectedRoute>} />
+
+                {/* Ruta por defecto */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+          </HistoriaClinicaProvider>
+        </TurnosProvider>
+      </ConsultasProvider>
+    </PacientesProvider>
+  );
+};
+
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <PacientesProvider>
-          <ConsultasProvider>
-            <TurnosProvider>
-              <HistoriaClinicaProvider>
-              <div className="min-vh-100 bg-light">
-                <Navbar />
-                <UpdateNotifier />
-                <ToastContainer />
-                <Routes>
-                  {/* Rutas Públicas */}
-                  <Route path="/" element={<Home />} />
-                  <Route path="/login" element={<Login />} />
-                  
-                  {/* Rutas protegidas */}
-                  <Route path="/pacientes" element={<ProtectedRoute><Pacientes /></ProtectedRoute>} />
-                  <Route path="/pacientes/nuevo" element={<ProtectedRoute><PacienteForm /></ProtectedRoute>} />
-                  <Route path="/pacientes/:id" element={<ProtectedRoute><PacienteDetalle /></ProtectedRoute>} />
-                  <Route path="/pacientes/:id/editar" element={<ProtectedRoute><PacienteForm /></ProtectedRoute>} />
-                  
-                  <Route path="/consultas" element={<ProtectedRoute><Consultas /></ProtectedRoute>} />
-                  <Route path="/consultas/nueva" element={<ProtectedRoute><ConsultaForm /></ProtectedRoute>} />
-                  <Route path="/consultas/:id" element={<ProtectedRoute><ConsultaDetalle /></ProtectedRoute>} />
-                  <Route path="/consultas/:id/editar" element={<ProtectedRoute><ConsultaForm /></ProtectedRoute>} />
-                  
-                  <Route path="/turnos" element={<ProtectedRoute><Turnos /></ProtectedRoute>} />
-                  <Route path="/turnos/nuevo" element={<ProtectedRoute><TurnoForm /></ProtectedRoute>} />
-                  <Route path="/turnos/:id/editar" element={<ProtectedRoute><TurnoForm /></ProtectedRoute>} />
-                  
-                  <Route path="/historia-clinica" element={<ProtectedRoute><HistoriaClinica /></ProtectedRoute>} />
-                  <Route path="/historia-clinica/nueva/:pacienteId" element={<ProtectedRoute><HistoriaClinicaForm /></ProtectedRoute>} />
-                  <Route path="/historia-clinica/:id" element={<ProtectedRoute><HistoriaClinicaDetalle /></ProtectedRoute>} />
-                  <Route path="/historia-clinica/:id/editar" element={<ProtectedRoute><HistoriaClinicaForm /></ProtectedRoute>} />
-                  <Route path="/cuenta" element={<ProtectedRoute><Cuenta /></ProtectedRoute>} />
-                  <Route path="/usuarios" element={<ProtectedRoute><Usuarios requireAdmin /></ProtectedRoute>} />
-                  
-                  {/* Ruta por defecto */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </div>
-              </HistoriaClinicaProvider>
-            </TurnosProvider>
-          </ConsultasProvider>
-        </PacientesProvider>
+        <AppShell />
       </AuthProvider>
     </Router>
   );

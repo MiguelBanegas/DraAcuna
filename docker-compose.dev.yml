@@ -1,4 +1,9 @@
 services:
+  frontend:
+      env_file:
+        - ./.env.development
+
+      command: npm run dev -- --host 0.0.0.0
   api:
     env_file:
       - ./server/.env.dev
@@ -7,7 +12,7 @@ services:
         condition: service_healthy
 
   postgres:
-  
+
     environment:
       POSTGRES_USER: dra_acuna
       POSTGRES_PASSWORD: acuna123

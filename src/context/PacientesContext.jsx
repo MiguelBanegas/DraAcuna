@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as pacientesService from '../services/pacientesService';
 import { matchTokensInFields, tokenizeSearch } from '../utils/search';
+import { useAuth } from './AuthContext';
 
 const PacientesContext = createContext();
 
@@ -13,6 +14,7 @@ export const usePacientes = () => {
 };
 
 export const PacientesProvider = ({ children }) => {
+  const { loading: authLoading, isAuthenticated } = useAuth();
   const [pacientes, setPacientes] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,8 +31,10 @@ export const PacientesProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated()) return;
     cargarPacientes();
-  }, [cargarPacientes]);
+  }, [authLoading, isAuthenticated, cargarPacientes]);
 
   const agregarPaciente = async (pacienteData) => {
     try {

@@ -2,6 +2,8 @@ import API_URL from "../utils/apiConfig";
 
 const getHeaders = () => {
   const token = localStorage.getItem("token");
+  //console.log("=== VERSION NUEVA DEL FRONT ===");
+  //console.log("TOKEN:", token);
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
@@ -36,6 +38,7 @@ const mapPacienteToAPI = (p) => ({
 });
 
 export const getAllPacientes = async (includeInactivos = false) => {
+  //console.log("Cargando pacientes...");
   try {
     const response = await fetch(`${API_URL}/pacientes?includeInactivos=${includeInactivos}`, {
       headers: getHeaders(),
