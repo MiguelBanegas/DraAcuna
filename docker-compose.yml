@@ -5,14 +5,15 @@ services:
       context: ./server
       dockerfile: Dockerfile
 
-    container_name: draacuna-api
+    
 
     working_dir: /app
     
     ports:
       - "3000:3000"
-    env_file:
-      - ./server/.env.docker
-    
+     
 
+    restart: unless-stopped
+  postgres:
+    image: postgres:17
     restart: unless-stopped

@@ -2,3 +2,26 @@ services:
   api:
     env_file:
       - ./server/.env.prod
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+
+    environment:
+      POSTGRES_USER: dra_acuna
+      POSTGRES_PASSWORD: acuna123
+      POSTGRES_DB: consultorio
+
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dra_acuna -d dra_acuna_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data_prod:
