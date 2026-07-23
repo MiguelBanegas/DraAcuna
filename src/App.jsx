@@ -24,6 +24,7 @@ import HistoriaClinicaForm from './components/historiaClinica/HistoriaClinicaFor
 import HistoriaClinicaDetalle from './components/historiaClinica/HistoriaClinicaDetalle';
 import Cuenta from './pages/Cuenta';
 import Usuarios from './pages/Usuarios';
+import Backups from './pages/Backups';
 
 const AppShell = () => {
   const { loading } = useAuth();
@@ -76,6 +77,7 @@ const AppShell = () => {
                 <Route path="/historia-clinica/:id/editar" element={<ProtectedRoute><HistoriaClinicaForm /></ProtectedRoute>} />
                 <Route path="/cuenta" element={<ProtectedRoute><Cuenta /></ProtectedRoute>} />
                 <Route path="/usuarios" element={<ProtectedRoute><Usuarios requireAdmin /></ProtectedRoute>} />
+                <Route path="/backups" element={<ProtectedRoute><Backups /></ProtectedRoute>} />
 
                 {/* Ruta por defecto */}
                 <Route path="*" element={<Navigate to="/" replace />} />

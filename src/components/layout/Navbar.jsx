@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Navbar as BSNavbar, Container, Nav, Button } from 'react-bootstrap';
-import { FaUserMd, FaUsers, FaStethoscope, FaCalendarAlt, FaSignOutAlt, FaFileMedical, FaBook, FaUser } from 'react-icons/fa';
+import { FaUserMd, FaUsers, FaStethoscope, FaCalendarAlt, FaSignOutAlt, FaFileMedical, FaBook, FaUser, FaDatabase } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
@@ -50,10 +50,16 @@ const Navbar = () => {
                   Mi Cuenta
                 </Nav.Link>
                 {isAdmin() && (
-                  <Nav.Link as={Link} to="/usuarios">
-                    <FaUser className="me-1" />
-                    Usuarios
-                  </Nav.Link>
+                  <>
+                    <Nav.Link as={Link} to="/usuarios">
+                      <FaUser className="me-1" />
+                      Usuarios
+                    </Nav.Link>
+                    <Nav.Link as={Link} to="/backups">
+                      <FaDatabase className="me-1" />
+                      Backups
+                    </Nav.Link>
+                  </>
                 )}
                 <Nav.Link href="https://ar.prvademecum.com/" target="_blank" rel="noopener noreferrer">
                   <FaBook className="me-1" />

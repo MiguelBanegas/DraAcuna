@@ -23,13 +23,14 @@ services:
       context: ./server
       dockerfile: Dockerfile
 
-    
-
     working_dir: /app
     
     ports:
       - "3000:3000"
-     
+    environment:
+      BACKUPS_DIR: /app/backups
+    volumes:
+      - ./backups:/app/backups
 
     restart: unless-stopped
   postgres:

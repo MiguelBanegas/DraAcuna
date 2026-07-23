@@ -27,6 +27,7 @@ import agendaExcepcionesRoutes from "./routes/agendaExcepcionesRoutes.js";
 import historiaClinicaRoutes from "./routes/historiaClinicaRoutes.js";
 import healthRouter from "./routes/health.js";
 import chatRoutes from "./routes/chatRoutes.js";
+import backupRoutes from "./routes/backupRoutes.js";
 
 // Usar Rutas
 app.use("/api/auth", authRoutes);
@@ -37,9 +38,12 @@ app.use("/api/agenda-excepciones", agendaExcepcionesRoutes);
 app.use("/api/historia-clinica", historiaClinicaRoutes);
 app.use("/api/health", healthRouter);
 app.use("/api/chat", chatRoutes);
-
+app.use("/api/backups", backupRoutes);
 
 // Iniciar servidor
+import { scheduleDailyBackup } from "./controllers/backupController.js";
+
 app.listen(PORT, () => {
   console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
+  scheduleDailyBackup();
 });
