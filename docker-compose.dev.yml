@@ -1,9 +1,13 @@
 services:
   frontend:
-      env_file:
-        - ./.env.development
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      
+    env_file:
+      - ./.env.development
 
-      command: npm run dev -- --host 0.0.0.0
+    command: pnpm run dev -- --host 0.0.0.0
   api:
     env_file:
       - ./server/.env.dev
